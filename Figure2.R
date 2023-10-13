@@ -19,19 +19,22 @@ endDate  <- as.Date("2018-11-13")
 
 dates <- as.Date(unlist(lapply(strsplit(names(totals), " "), `[[`, 1)), format = "%m.%d.%y")
 
-relTotals <- totals[dates <= endDate & dates >= startDate]
+#relTotals <- totals[dates <= endDate & dates >= startDate]
+relTotals <- totals
 allCounts <- NULL
 for (i in seq(1, length(relTotals))){
   df <- relTotals[[i]]
-  df$`Sample Name` <- gsub(" 14 2500", "", df$`Sample Name`)
+  colnames(df)[grep("Sample", colnames(df))] <- "SampleID"
+  colnames(df)[grep("Gate", colnames(df))] <- "GateName"
+  df$SampleID <- gsub(" 14 2500", "", df$SampleID)
   df$Depth <- gsub('m','', gsub(' ', '', gsub('I', '', 
-                                              gsub('\\s*\\([^\\)]+\\)','', df$`Sample Name`))))
+                                              gsub('\\s*\\([^\\)]+\\)','', df$SampleID))))
   date <- as.Date(unlist(lapply(strsplit(names(totals), " "), `[[`, 1)), format = "%m.%d.%y")[i]
   
-  subdf <- df[grep("NA|Pop", df$`Gate Name`),]
+  subdf <- df[grep("NA|Pop", df$GateName),]
   subdf$Concentration <- as.numeric(subdf$Concentration)
   
-  agAll <- aggregate(Concentration~`Sample Name`+Depth, subdf, FUN = sum)
+  agAll <- aggregate(Concentration~SampleID+Depth, subdf, FUN = sum)
   agAll$Depth <- gsub("-", "", agAll$Depth)
   agAll$Depth <- gsub("SYBR", "", agAll$Depth)
   
@@ -48,6 +51,14 @@ for (i in seq(1, length(relTotals))){
 }
 allCounts[tolower(allCounts$Depth) == "chlaax", "Depth"] <- "DCM"
 allCounts[tolower(allCounts$Depth) == "chla", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "20dcm", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "14dcm", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "14dc", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "12dcm", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "12dc", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "16mdc", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "16mdcm", "Depth"] <- "DCM"
+allCounts[tolower(allCounts$Depth) == "15dcm", "Depth"] <- "DCM"
 
 allCounts[allCounts$Date==as.Date("2016-09-09") & allCounts$Depth == 18, "Depth"] <- "DCM"
 allCounts[allCounts$Date==as.Date("2016-10-26") & allCounts$Depth == 17, "Depth"] <- "DCM"
@@ -67,13 +78,19 @@ allCounts[allCounts$Date==as.Date("2018-08-13") & allCounts$Depth == 20, "Depth"
 allCounts[allCounts$Date==as.Date("2018-09-06") & allCounts$Depth == 26, "Depth"] <- "DCM"
 allCounts[allCounts$Date==as.Date("2018-09-24") & allCounts$Depth == 20, "Depth"] <- "DCM"
 allCounts[allCounts$Date==as.Date("2018-11-13") & allCounts$Depth == 15, "Depth"] <- "DCM"
-
+allCounts[allCounts$Date==as.Date("2018-12-10") & allCounts$Depth == 17, "Depth"] <- "DCM"
+allCounts[allCounts$Date==as.Date("2019-01-09") & allCounts$Depth == 14, "Depth"] <- "DCM"
+allCounts[allCounts$Date==as.Date("2019-04-15") & allCounts$Depth == 16, "Depth"] <- "DCM"
+allCounts[allCounts$Date==as.Date("2019-05-06") & allCounts$Depth == 12, "Depth"] <- "DCM"
+allCounts[allCounts$Date==as.Date("2019-05-29") & allCounts$Depth == 14, "Depth"] <- "DCM"
 
 goodDepthsCounts <- allCounts[which(allCounts$Depth %in% c(5, 10, "10DCM", "DCM", 50, 90)),]
 
-allDepths <- rbind(goodDepthsCounts, goodDepthsCounts[goodDepthsCounts$Depth == "10DCM",])
-allDepths[nrow(allDepths), "Depth"] <- "DCM"
-allDepths[allDepths$Depth == "10DCM", "Depth"] <- 10
+#allDepths <- rbind(goodDepthsCounts, goodDepthsCounts[goodDepthsCounts$Depth == "10DCM",])
+#allDepths[nrow(allDepths), "Depth"] <- "DCM"
+#allDepths[allDepths$Depth == "10DCM", "Depth"] <- 10
+
+allDepths <- aggregate(CellConc ~ Date+Depth, goodDepthsCounts, FUN = mean)
 
 reOrgDepths <- data.frame("Date" = unique(allDepths$Date))
 reOrgDepths <- merge(reOrgDepths, allDepths[allDepths$Depth==5,], by = "Date", all.x = TRUE)
@@ -99,25 +116,29 @@ totalCellCounts <- reOrgDepths
 
 totals <- mySheets[grep("AUTO", names(mySheets))]
 startDate <- as.Date("2016-09-09")
-endDate  <- as.Date("2018-11-13")
+endDate  <- as.Date("2019-07-21")
 
 dates <- as.Date(unlist(lapply(strsplit(names(totals), " "), `[[`, 1)), format = "%m.%d.%y")
 
-relTotals <- totals[dates <= endDate & dates >= startDate]
+relTotals <- totals[dates <= endDate]
 allEuks <- NULL
 allCyas <- NULL
 for (i in seq(1, length(relTotals))){
   df <- relTotals[[i]]
+  colnames(df)[grep("Sample", colnames(df))] <- "SampleID"
+  colnames(df)[grep("Gate", colnames(df))] <- "GateName"
   df$Depth <- gsub('m','', gsub(' ', '', gsub('I', '', 
-                                              gsub('\\s*\\([^\\)]+\\)','', df$`Sample Name`))))
+                                              gsub('\\s*\\([^\\)]+\\)','', df$SampleID))))
   date <- as.Date(unlist(lapply(strsplit(names(totals), " "), `[[`, 1)), format = "%m.%d.%y")[i]
   
-  subdfEuk <- df[grep("Euks", df$`Gate Name`),]
+  print(date)
+  
+  subdfEuk <- df[grep("Euks", df$GateName),]
   subdfEuk$Concentration <- as.numeric(subdfEuk$Concentration)
-  subdfCya <- df[grep("Cyan", df$`Gate Name`),]
+  subdfCya <- df[grep("Cyan", df$GateName),]
   subdfCya$Concentration <- as.numeric(subdfCya$Concentration)
   
-  agEuk <- aggregate(Concentration~`Sample Name`+Depth, subdfEuk, FUN = sum)
+  agEuk <- aggregate(Concentration~SampleID+Depth, subdfEuk, FUN = sum)
   agEuk$Depth <- gsub("-", "", agEuk$Depth)
   
   meanEuk <- aggregate(Concentration~Depth, agEuk, FUN = mean)
@@ -131,7 +152,7 @@ for (i in seq(1, length(relTotals))){
     allEuks <- rbind(allEuks, meanEuk)
   }
   
-  agCya <- aggregate(Concentration~`Sample Name`+Depth, subdfCya, FUN = sum)
+  agCya <- aggregate(Concentration~SampleID+Depth, subdfCya, FUN = sum)
   agCya$Depth <- gsub("-", "", agCya$Depth)
   
   meanCya <- aggregate(Concentration~Depth, agCya, FUN = mean)
@@ -147,6 +168,14 @@ for (i in seq(1, length(relTotals))){
 }
 allEuks[tolower(allEuks$Depth) == "chlaax", "Depth"] <- "DCM"
 allEuks[tolower(allEuks$Depth) == "chla", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "20dcm", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "14dcm", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "14dc", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "12dcm", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "12dc", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "16mdc", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "16mdcm", "Depth"] <- "DCM"
+allEuks[tolower(allEuks$Depth) == "15dcm", "Depth"] <- "DCM"
 
 allEuks[allEuks$Date==as.Date("2016-09-09") & allEuks$Depth == 18, "Depth"] <- "DCM"
 allEuks[allEuks$Date==as.Date("2016-10-26") & allEuks$Depth == 17, "Depth"] <- "DCM"
@@ -166,10 +195,20 @@ allEuks[allEuks$Date==as.Date("2018-08-13") & allEuks$Depth == 20, "Depth"] <- "
 allEuks[allEuks$Date==as.Date("2018-09-06") & allEuks$Depth == 26, "Depth"] <- "DCM"
 allEuks[allEuks$Date==as.Date("2018-09-24") & allEuks$Depth == 20, "Depth"] <- "DCM"
 allEuks[allEuks$Date==as.Date("2018-11-13") & allEuks$Depth == 15, "Depth"] <- "DCM"
+allEuks[allEuks$Date==as.Date("2018-12-10") & allEuks$Depth == 17, "Depth"] <- "DCM"
 
+allEuks <- aggregate(CellConc ~ Date+Depth, allEuks, FUN = mean)
 
 allCyas[tolower(allCyas$Depth) == "chlaax", "Depth"] <- "DCM"
 allCyas[tolower(allCyas$Depth) == "chla", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "20dcm", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "14dcm", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "14dc", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "12dcm", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "12dc", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "16mdc", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "16mdcm", "Depth"] <- "DCM"
+allCyas[tolower(allCyas$Depth) == "15dcm", "Depth"] <- "DCM"
 
 allCyas[allCyas$Date==as.Date("2016-09-09") & allCyas$Depth == 18, "Depth"] <- "DCM"
 allCyas[allCyas$Date==as.Date("2016-10-26") & allCyas$Depth == 17, "Depth"] <- "DCM"
@@ -189,13 +228,16 @@ allCyas[allCyas$Date==as.Date("2018-08-13") & allCyas$Depth == 20, "Depth"] <- "
 allCyas[allCyas$Date==as.Date("2018-09-06") & allCyas$Depth == 26, "Depth"] <- "DCM"
 allCyas[allCyas$Date==as.Date("2018-09-24") & allCyas$Depth == 20, "Depth"] <- "DCM"
 allCyas[allCyas$Date==as.Date("2018-11-13") & allCyas$Depth == 15, "Depth"] <- "DCM"
+allCyas[allCyas$Date==as.Date("2018-12-10") & allCyas$Depth == 17, "Depth"] <- "DCM"
 
-colnames(allCyas) <- c("Depth", "CyaConc", "Date")
-colnames(allEuks) <- c("Depth", "EukConc", "Date")
-colnames(allCounts) <- c("Depth", "TotalConc", "Date")
+allCyas <- aggregate(CellConc ~ Date+Depth, allCyas, FUN = mean)
 
-pigAlls <- merge(allCyas, allEuks, by = c("Date", "Depth"))
-cellAlls <- merge(pigAlls, allCounts, by = c("Date", "Depth"))
+colnames(allCyas) <- c("Date", "Depth", "CyaConc")
+colnames(allEuks) <- c("Date", "Depth", "EukConc")
+colnames(allDepths) <- c("Date", "Depth", "TotalConc")
+
+pigAlls <- merge(allCyas, allEuks, by = c("Date", "Depth"), all = TRUE)
+cellAlls <- merge(pigAlls, allDepths, by = c("Date", "Depth"), all = TRUE)
 
 goodDepthsCounts <- cellAlls[which(cellAlls$Depth %in% c(5, 10, "10DCM", "DCM", 50, 90)),]
 
@@ -218,6 +260,9 @@ allDepths$Col <-
 monthDays <- 
   as.numeric(format(seq(as.Date("2011-1-1"), as.Date("2011-12-1"), by = "month"), "%j"))
 thirdMonths <- monthDays[seq(3, 12, by = 3)]
+
+allDepths <- allDepths[order(allDepths$Date),]
+
 m5Depths <- allDepths[allDepths$Depth == "5",]
 m10Depths <- allDepths[allDepths$Depth == "10",]
 DCMDepths <- allDepths[allDepths$Depth == "DCM",]
@@ -269,263 +314,277 @@ sd(hypoCounts[hypoCounts$DOY > 125 & hypoCounts$DOY < 330, "TotalConc"])
 mean(epiCounts[epiCounts$DOY > 125 & epiCounts$DOY < 330, "TotalConc"])
 sd(epiCounts[epiCounts$DOY > 125 & epiCounts$DOY < 330, "TotalConc"])
 
-lx1 <- 0.14
-lx2 <- 0.48
-rx1 <- 0.65
-rx2 <- 0.99
+lx1 <- 0.07
+lx2 <- 0.46
+rx1 <- 0.605
+rx2 <- 0.995
 
-png("FigBinExtras/cellCountsDuo.png", width = 1200, height = 1200)
+earlyFirst <- as.Date("2016-12-01")
+earlyLast <- as.Date("2017-05-01")
+lateFirst <- as.Date("2017-12-01")
+lateLast <- as.Date("2018-05-15")
+
+allMonths <- seq.Date(as.Date("2016-03-01"), as.Date("2020-03-01"), by = "month")
+allThirds <- allMonths[c(TRUE, FALSE, FALSE)]
+allTabs <- allMonths[c(FALSE, TRUE, TRUE)]
+
+xLabelDate5 <- as.Date("2016-10-10")
+xLabelDateBig <- as.Date("2016-10-20")
+xLabelChl <- as.Date("2016-12-01")
+cexSmall <- 0.9
+
+letters <- c("5 m", "5 m", "10 m", "10 m", "Chl max", "Chl max", "50 m", 
+             "50 m", "90 m", "90 m")
+
+tiff("FigBinExtras/cellCountsDuo.tiff", width = 7, height = 6, 
+    pointsize = 12, units = "in", res = 1200)
 plot.new()
 
 ##Total
 ###5m###
-par(new = "TRUE",plt = c(lx1,lx2,0.82,0.98),las = 1, cex.axis = 2.5, xpd = FALSE)
-plot(m5Depths$DOY, m5Depths$TotalConc,
-     type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
-     main = "", ylim = c(0, 1200))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m5Depths$DOY, m5Depths$TotalConc, cex = 2.5, lwd = 2.5)
-points(m5Depths$DOY, m5Depths$TotalConc, pch = 18, cex = 2.5, lwd = 2.5, 
-       col = m5Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 1200, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 12, length.out = 3), at = seq(0, 1200, length.out = 3), 
-     font = 2)
-text(300, 1100, "5 m", cex = 2.5, font = 2, las = 0)
+par(new = "TRUE",plt = c(lx1,lx2,0.82,0.98),las = 1, xpd = FALSE)
+plot(m5Depths$Date, m5Depths$TotalConc, type = "l", pch = 18, yaxt = "n", 
+     xaxt = "n", xlab = "", ylab = "", ylim = c(0, 1200))
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m5Depths$Date, m5Depths$TotalConc)
+points(m5Depths$Date, m5Depths$TotalConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 1200, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 1200, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 12, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDate5, 1100, letters[1], las = 0)
 
 ###10###
-par(new = "TRUE",plt = c(lx1,lx2,0.64,0.8),las = 1, cex.axis = 2.5)
-plot(m10Depths$DOY, m10Depths$TotalConc,
+par(new = "TRUE",plt = c(lx1,lx2,0.64,0.8),las = 1)
+plot(m10Depths$Date, m10Depths$TotalConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 1200))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m10Depths$DOY, m10Depths$TotalConc, cex = 2.5, lwd = 2.5)
-points(m10Depths$DOY, m10Depths$TotalConc, pch = 18, cex = 2.5, lwd = 2.5, 
-       col = m10Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 1200, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 12, length.out = 3), at = seq(0, 1200, length.out = 3), font = 2)
-text(300, 1100, "10 m", cex = 2.5, font = 2, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m10Depths$Date, m10Depths$TotalConc)
+box(lwd = 1)
+points(m10Depths$Date, m10Depths$TotalConc, pch = 18)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 1200, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 1200, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 12, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDateBig, 1100, letters[3], las = 0)
 
 
 #Chl Max
-par(new = "TRUE",plt = c(lx1,lx2,0.46,0.62),las = 1, cex.axis = 2.5)
-plot(DCMDepths$DOY, DCMDepths$TotalConc,
+par(new = "TRUE",plt = c(lx1,lx2,0.46,0.62),las = 1)
+plot(DCMDepths$Date, DCMDepths$TotalConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 1200))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(DCMDepths$DOY, DCMDepths$TotalConc, cex = 2.5, lwd = 2.5)
-points(DCMDepths$DOY, DCMDepths$TotalConc, pch = 18, cex = 2.5, lwd = 2.5, 
-       col = DCMDepths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 1200, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 12, length.out = 3), at = seq(0, 1200, length.out = 3), 
-     font = 2)
-text(275, 1100, "Chl max", cex = 2.5, font = 2, las = 0)
-mtext("Non-pigmented Picoplankton Abundance", side = 2, line = 7, font = 2, 
-      cex = 2.5, las = 0)
-mtext(bquote(bold("10"^{"5"}~"Cells mL"^{"-1"})), 
-      side = 2, cex = 2.5, font = 2, line = 4, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(DCMDepths$Date, DCMDepths$TotalConc)
+points(DCMDepths$Date, DCMDepths$TotalConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 1200, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 1200, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 12, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelChl, 1100, letters[5], las = 0)
+mtext(bquote("Non-pigmented picoplankton  (10"^{"5"}~"Cells mL"^{"-1"}~")"), 
+      side = 2, line = 1.2, las = 0)
 
 
 ##50 m
-par(new = "TRUE",plt = c(lx1,lx2,0.28,0.44),las = 1, cex.axis = 2.5)
-plot(m50Depths$DOY, m50Depths$TotalConc,
+par(new = "TRUE",plt = c(lx1,lx2,0.28,0.44),las = 1)
+plot(m50Depths$Date, m50Depths$TotalConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 1200))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m50Depths$DOY, m50Depths$TotalConc, cex = 2.5, lwd = 2.5)
-points(m50Depths$DOY, m50Depths$TotalConc, pch = 18, cex = 2.5, lwd = 2.5, 
-       col = m50Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 1200, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 12, length.out = 3), at = seq(0, 1200, length.out = 3), 
-     font = 2)
-text(300, 1100, "50 m", cex = 2.5, font = 2, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m50Depths$Date, m50Depths$TotalConc)
+points(m50Depths$Date, m50Depths$TotalConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 1200, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 1200, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 12, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDateBig, 1100, letters[7], las = 0)
 
 
 #90
-par(new = "TRUE",plt = c(lx1,lx2,0.1,0.26),las = 1, cex.axis = 2.5)
-plot(m90Depths$DOY, m90Depths$TotalConc,
-     type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
-     main = "", ylim = c(0, 1200))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m90Depths$DOY, m90Depths$TotalConc, cex = 2.5, lwd = 2.5)
-points(m90Depths$DOY, m90Depths$TotalConc, pch = 18, cex = 2.5, lwd = 2.5, 
-       col = m90Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = month.abb[seq(3, 12, by = 3)], at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 1200, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 12, length.out = 3), at = seq(0, 1200, length.out = 3), font = 2)
-text(300, 1100, "90 m", cex = 2.5, font = 2, las = 0)
+par(new = "TRUE",plt = c(lx1,lx2,0.1,0.26),las = 1)
+plot(m90Depths$Date, m90Depths$TotalConc, type = "l", pch = 18, yaxt = "n", 
+     xaxt = "n", xlab = "", ylab = "", main = "", ylim = c(0, 1200))
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m90Depths$Date, m90Depths$TotalConc)
+points(m90Depths$Date, m90Depths$TotalConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = -1.3, labels = format(allThirds, "%b"), at = allThirds,
+     cex.axis = cexSmall)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 1200, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 1200, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 12, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDateBig, 1100, letters[9], las = 0)
+text(as.Date("2016-10-01"), -600, "2016", xpd = NA, cex = cexSmall)
+text(as.Date("2017-07-01"), -600, "2017", xpd = NA, cex = cexSmall)
+text(as.Date("2018-07-01"), -600, "2018", xpd = NA, cex = cexSmall)
+mtext("Date", 1, line = 2, adj = 1.24)
 
 
 
 ##Cya
 ###5m###
-par(new = "TRUE",plt = c(rx1,rx2,0.82,0.98),las = 1, cex.axis = 2.5, xpd = FALSE)
-plot(m5Depths$DOY, m5Depths$CyaConc,
+par(new = "TRUE",plt = c(rx1,rx2,0.82,0.98),las = 1, xpd = FALSE)
+plot(m5Depths$Date, m5Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 70))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m5Depths$DOY, m5Depths$CyaConc, cex = 2.5, lwd = 2.5)
-points(m5Depths$DOY, m5Depths$CyaConc, pch = 18, cex = 2.5, lwd = 2.5, col = m5Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 70, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 7, length.out = 3), at = seq(0, 70, length.out = 3), font = 2)
-text(300, 65, "5 m", cex = 2.5, font = 2, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m5Depths$Date, m5Depths$CyaConc)
+points(m5Depths$Date, m5Depths$CyaConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 70, length.out = 5), labels = NA)
+axis(2,tck = -0.05, labels = NA, at = seq(0, 70, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 7, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDate5, 65, letters[2], las = 0)
 
 
 ###10###
-par(new = "TRUE",plt = c(rx1,rx2,0.64,0.8),las = 1, cex.axis = 2.5)
-plot(m10Depths$DOY, m10Depths$CyaConc,
+par(new = "TRUE",plt = c(rx1,rx2,0.64,0.8),las = 1)
+plot(m10Depths$Date, m10Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 70))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m10Depths$DOY, m10Depths$CyaConc, cex = 2.5, lwd = 2.5)
-points(m10Depths$DOY, m10Depths$CyaConc, pch = 18, cex = 2.5, lwd = 2.5, col = m10Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 70, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 7, length.out = 3), at = seq(0, 70, length.out = 3), font = 2)
-text(300, 65, "10 m", cex = 2.5, font = 2, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m10Depths$Date, m10Depths$CyaConc)
+points(m10Depths$Date, m10Depths$CyaConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 70, length.out = 5), labels = NA)
+axis(2,tck = -0.05, labels = NA, at = seq(0, 70, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 7, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDateBig, 65, letters[4], las = 0)
 
 
 #Chl Max
-par(new = "TRUE",plt = c(rx1,rx2,0.46,0.62),las = 1, cex.axis = 2.5)
-plot(DCMDepths$DOY, DCMDepths$CyaConc,
+par(new = "TRUE",plt = c(rx1,rx2,0.46,0.62),las = 1)
+plot(DCMDepths$Date, DCMDepths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 210))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(DCMDepths$DOY, DCMDepths$CyaConc, cex = 2.5, lwd = 2.5)
-points(DCMDepths$DOY, DCMDepths$CyaConc, pch = 18, cex = 2.5, lwd = 2.5, 
-       col = DCMDepths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 210, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 21, length.out = 3), at = seq(0, 210, length.out = 3), font = 2)
-mtext("Picoplanktonic Cyanobacteria Abundance", side = 2, font = 2, cex = 2.5, 
-      line = 9, las = 0)
-mtext(bquote(bold("10"^{"4"}~"Cells mL"^{"-1"})), 
-      side = 2, cex = 2.5, font = 2, line = 5.5, las = 0)
-text(275, 195, "Chl max", cex = 2.5, font = 2, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(DCMDepths$Date, DCMDepths$CyaConc)
+points(DCMDepths$Date, DCMDepths$CyaConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 210, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 210, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+mtext(bquote("Picoplanktonic cyanobacteria (10"^{"4"}~"Cells mL"^{"-1"}~")"), 
+      side = 2, line = 2, las = 0)
+axLab <- seq(0, 21, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelChl, 195, letters[6], las = 0)
 
 
 ##50 m
-par(new = "TRUE",plt = c(rx1,rx2,0.28,0.44),las = 1, cex.axis = 2.5)
-plot(m50Depths$DOY, m50Depths$CyaConc,
+par(new = "TRUE",plt = c(rx1,rx2,0.28,0.44),las = 1)
+plot(m50Depths$Date, m50Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 70))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m50Depths$DOY, m50Depths$CyaConc, cex = 2.5, lwd = 2.5)
-points(m50Depths$DOY, m50Depths$CyaConc, pch = 18, cex = 2.5, lwd = 2.5, col = m50Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = NA, at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 70, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 7, length.out = 3), at = seq(0, 70, length.out = 3), font = 2)
-text(300, 65, "50 m", cex = 2.5, font = 2, las = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m50Depths$Date, m50Depths$CyaConc)
+points(m50Depths$Date, m50Depths$CyaConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = 1, labels = NA, at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 70, length.out = 5), labels = NA)
+axis(2, tck = -0.05, labels = NA, at = seq(0, 70, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 7, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDateBig, 65, letters[8], las = 0)
 
 
 #90
-par(new = "TRUE",plt = c(rx1,rx2,0.1,0.26),las = 1, cex.axis = 2.5)
-plot(m90Depths$DOY, m90Depths$CyaConc,
+par(new = "TRUE",plt = c(rx1,rx2,0.1,0.26),las = 1)
+plot(m90Depths$Date, m90Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     cex.main = 2.5, cex = 2.5, lwd = 2.5, cex.lab = 2.5,
      main = "", ylim = c(0, 70))
-rect(mixStart[1], -100, mixEnd[1], 1500, col = "#B4B4B4")
-rect(mixStart[2], -100, mixEnd[2], 1500, col = "#B4B4B4")
-lines(m90Depths$DOY, m90Depths$CyaConc, cex = 2.5, lwd = 2.5)
-points(m90Depths$DOY, m90Depths$CyaConc, pch = 18, cex = 2.5, lwd = 2.5, col = m90Depths$Col)
-box(lwd = 3)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.05, padj = 1,
-     labels = month.abb[seq(3, 12, by = 3)], at = thirdMonths, font = 2)
-axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = monthDays, labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, padj = 1, 
-     at = seq(0, 70, length.out = 5), labels = NA)
-axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.05,
-     labels = seq(0, 7, length.out = 3), at = seq(0, 70, length.out = 3), font = 2)
-text(300, 65, "90 m", cex = 2.5, font = 2, las = 0)
-
-
-
-par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
-plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
-
-legend("bottom", legend = annCols$Year, text.font = 2, bty = "n",
-       fill = as.character(annCols$Colors), horiz = TRUE, cex = 2.5, box.lwd = 0)
+rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
+rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
+lines(m90Depths$Date, m90Depths$CyaConc)
+points(m90Depths$Date, m90Depths$CyaConc, pch = 18)
+box(lwd = 1)
+axis(1, tck = -0.05, padj = -1.3, cex.axis = cexSmall,
+     labels = format(allThirds, "%b"), at = allThirds)
+axis(1, tck = -0.03, padj = 1, at = allTabs, labels = NA)
+axis(2, tck = -0.03, padj = 1, at = seq(0, 70, length.out = 5), labels = NA)
+axis(2, tck = -0.05, hadj = 0.5, labels = NA, at = seq(0, 70, length.out = 3))
+abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
+       lty = 2, col = "darkgrey")
+axLab <- seq(0, 7, length.out = 3)
+axAdj <- seq(4.1, -3.2, length.out = length(axLab))
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
+text(xLabelDateBig, 65, letters[10], las = 0)
+text(as.Date("2016-10-01"), -35, "2016", xpd = NA, cex = cexSmall)
+text(as.Date("2017-07-01"), -35, "2017", xpd = NA, cex = cexSmall)
+text(as.Date("2018-07-01"), -35, "2018", xpd = NA, cex = cexSmall)
 
 dev.off()
 
+churchDCM <- read.csv("~/FlatheadPublic/ChurchLab/ChurchDCM.csv", stringsAsFactors = FALSE)
+churchDCM$Date <- as.Date(churchDCM$Date, "%m-%d-%Y")
+allDepths$Col <- NULL
+allDepths$DOY <- NULL
+allDepths$EukConc <- NULL
 
-mySheetsTrim <- totals[1:5]
-rbind(mySheetsTrim)
-df <- do.call("rbind", mySheetsTrim)
+trimCells <- merge(allDepths, churchDCM, all.x = TRUE, by = "Date")
+trimCells <- trimCells[!is.na(trimCells$CyaConc),]
+trimCells$isDCM <- FALSE
+trimCells[trimCells$Depth.x == "DCM", "isDCM"] <- TRUE
+trimCells[trimCells$isDCM == "TRUE", "Depth.x"] <- trimCells[trimCells$isDCM == "TRUE", "Depth.y"]
+trimCells$Depth.y <- NULL
+colnames(trimCells) <- c("Date", "Depth", "Cyano", "NonPigmented", "isDCM")
+write.csv(trimCells, "~/FlatheadMicrobes/cellCountDat.csv", quote = FALSE, row.names = FALSE)

@@ -1,6 +1,7 @@
 library(readxl)
 library(akima)
 library(viridis)
+library(png)
 
 mainCol <- "#DC3220"
 col2 <- "#005AB5"
@@ -62,43 +63,6 @@ library(tgp)
 
 fldTempAllDate <- interp.loess(tempDF$Date, tempDF$Depth, tempDF$Temp, 
                                gridlen = c(400,400), span = 0.12)
-
-p <- filled.contour(x = fldTempAllDate$x, bty = "n",
-                    y = fldTempAllDate$y, z = fldTempAllDate$z,
-                    color.palette = function(x)viridis(x), nlevels = 10, 
-                    plot.title={
-                      mtext("",1,line=5,las=1,cex=2.5)
-                      mtext("Depth (m)",2,line=5.5, las = 0,cex=2.5, font = 2)
-                    },
-                    plot.axes={
-                      axis(1, cex.axis=2.5, labels = NA, 
-                           at = as.numeric(seq(as.Date("2016-09-01"), 
-                                               as.Date("2018-12-31"), 
-                                               by = "month")), lwd.ticks = 3, 
-                           tck = -0.015);
-                      lines(mldData$Date, mldData$td05, col = "gray", lwd = 5); 
-                      abline(v=as.Date("2017-01-01"), lty = 2, col = "gray75", 
-                             lwd = 3);
-                      abline(v=as.Date("2018-01-01"), lty = 2, col = "gray75", 
-                             lwd = 3);
-                      abline(v=as.Date("2019-01-01"), lty = 2, col = "gray75", 
-                             lwd = 5)
-                      axis(2, cex.axis=2.5, hadj = 1.2, lwd.ticks = 3, 
-                           tck = -0.025, font = 2);
-                      axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, 
-                           padj = 1, font = 2,
-                           at = datSeq[seq(1, length(datSeq), 3)],
-                           labels = format(datSeq[seq(1, length(datSeq), 3)], "%b"));
-                      box(lwd = 3)
-                    },
-                    key.axes={
-                      axis(4, cex.axis=2.5) #####################
-                    },
-                    ylim = rev(range(fldTempAllDate$y)),
-                    xlim = c(as.Date("2016-09-01"), as.Date("2018-12-31"))
-)
-
-
 
 
 mldData <- read.csv("~/TMNT/MLDAll.csv", stringsAsFactors = FALSE)
@@ -185,8 +149,8 @@ axis(1, cex.axis=2.5, labels = NA,
 axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.025, hadj = 1, 
      at = seq(10, 70, by = 20), labels = NA)
 axis(2, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, hadj = 1.2, las = 1,
-     at = seq(0, 60, by = 20), labels = seq(0, 60, by = 20), font = 2)
-mtext("A", font = 2, side = 3, line = 1, cex = 2.5, adj = 0)
+     at = seq(0, 60, by = 20), labels = NA, font = 2)
+#mtext("A", font = 2, side = 3, line = 1, cex = 2.5, adj = 0)
 dev.off()
 
 
@@ -219,20 +183,21 @@ p <- filled.contour(x = fldTempAllDate$x, bty = "n",
                       abline(v=as.Date("2019-01-01"), lty = 2, col = "gray75", 
                              lwd = 5)
                       axis(2, cex.axis=2.5, hadj = 1.2, lwd.ticks = 3, 
-                           tck = -0.025, font = 2, at = seq(80, 0, by = -20));
+                           tck = -0.015, font = 2, at = seq(80, 0, by = -20),
+                           labels = NA);
                       axis(1, cex.axis=2.5, lwd.ticks = 3, tck = -0.03, 
                            padj = 1, font = 2,
                            at = datSeq[seq(1, length(datSeq), 3)],
-                           labels = format(datSeq[seq(1, length(datSeq), 3)], "%b"));
+                           labels = NA);
                       box(lwd = 3)
                     },
                     key.axes={
-                      axis(4, cex.axis=2.5) #####################
+                      axis(4, cex.axis = 0.001) #####################
                     },
                     ylim = rev(range(fldTempAllDate$y)),
                     xlim = c(as.Date("2016-09-01"), as.Date("2018-12-31"))
 )
-mtext("B", 3, line = 1, font = 2, adj = 0, cex = 2.5)
+#mtext("B", 3, line = 1, font = 2, adj = 0, cex = 2.5)
 
 
 dev.off()
@@ -241,21 +206,34 @@ library(png)
 mainCol <- "#DC3220"
 col2 <- "#005AB5"
 
+cexSmall <- 0.9
 
-png("FigBinExtras/SurfLightandTemp_Intro.png", width = 1600, height = 1200)
+tiff("FigBinExtras/SurfLightandTemp_Intro.tiff", width = 7, height = 6, 
+     pointsize = 12, units = "in", res = 1200)
 
-par(mar = c(1, 3, 1, 0))
+par(mar = c(1, 3, 1, 0), xpd = NA)
 plot(0:2, 0:2, type = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")
-rasterImage(readPNG(source="FigBinExtras/surfaceLightMLD.png"), 0, 1.3, 2, 2.1)
-rasterImage(readPNG(source="FigBinExtras/tempProfileSub.png"), 0, -0.025, 2, 1.3)
-mtext("Depth (m)", 2, font = 2, cex = 2.5, line = -2, adj = 0.33)
-mtext(expression(bold("PAR")), 
-      2, font = 2, cex = 2.5, line = -1, adj = 0.84)
-mtext(expression(bold("(mol quanta m"^{"-2"}~"d"^{"-1"}~")")), 
-      2, font = 2, cex = 2.5, line = -4, adj = 0.92)
-text(1.93, 1.25, "Temp (°C)", font = 2, cex=2.5)
-mtext("2016", 1, font = 2, cex = 2.5, line = -1, adj = 0.12)
-mtext("2017", 1, font = 2, cex = 2.5, line = -1, adj = 0.35)
-mtext("2018", 1, font = 2, cex = 2.5, line = -1, adj = 0.74)
-dev.off()
+rasterImage(readPNG(source="FigBinExtras/surfaceLightMLD.png"), -0.16, 1.3, 2, 2.1)
+rasterImage(readPNG(source="FigBinExtras/tempProfileSub.png"), -0.15, -0.025, 2, 1.3)
+mtext("Depth (m)", 2, line = 1.4, adj = 0.33)
+mtext(expression("PAR (mol quanta m"^{"-2"}~"d"^{"-1"}~")"), 2, line = 1.3, 
+      adj = 0.98)
+text(1.95, 1.25, "Temp (°C)")
+mtext("2016", 1, line = -1, adj = 0.04, cexSmall)
+mtext("2017", 1, line = -1, adj = 0.33, cexSmall)
+mtext("2018", 1, line = -1, adj = 0.74, cexSmall)
+parSeq <- seq(0, 60, by = 20)
+parAdj <- seq(-7.5, -20, length.out = length(parSeq))
+mtext(parSeq, 2, line = 0.22, padj = parAdj, las = 1, cexSmall)
+depthSeq <- seq(0, 80, by = 20)
+depthAdj <- seq(-3.8, 14.5, length.out = length(depthSeq))
+mtext(depthSeq, 2, line = 0.22, padj = depthAdj, las = 1, cexSmall)
+datSeq0 <- format(datSeq[seq(1, length(datSeq), 3)], "%b")
+datAdj <- seq(-0.02, 0.88, length.out = length(datSeq0))
+mtext(datSeq0, 1, line = -1.85, adj = datAdj, las = 1, cexSmall)
+mtext("Date", 1, line = -0.2,adj = 0.48)
+tempSeq <- seq(0, 15, by = 5)
+tempAdj <- seq(20.1, 0.2, length.out = length(tempSeq))
+mtext(tempSeq, 2, line = -30, padj = tempAdj, las = 1, cexSmall, adj = 0)
 
+dev.off()

@@ -63,14 +63,24 @@ library(tictoc)
 selectES <- trimmES
 selectES$NH3 <- NULL
 selectES$pH <- NULL
+selectES$D.O..1 <- NULL
+selectES$TURB <- NULL
+selectES$TOC <- NULL
+selectES$TN <- NULL
+selectES$TP <- NULL
+selectES$DOC <- NULL
+selectES$CHLa.1 <- NULL
+
+colnames(selectES) <- c("Depth", "Temp", "Dissolved O2", "Chl a", "Surface temp", 
+                        "Mixed layer depth", "N+N", "Incident PAR")
 
 tic()
-enviroControlsTrimmed <- bioenv(trimmCount ~ ., trimmES, upto = 6)
+enviroControlsTrimmed <- bioenv(trimmCount ~ ., selectES, upto = 6)
 toc()
 
-tic()
-enviroControlsFull <- bioenv(countMatTrim ~ ., enviroSmall0, upto = 6)
-toc()
+#tic()
+#enviroControlsFull <- bioenv(countMatTrim ~ ., enviroSmall0, upto = 6)
+#toc()
 
 #upto 2 = 210, 0.909 sec (0.004)
 #upto 3 = 1350, 5.811 sec (0.004)
@@ -81,30 +91,31 @@ distMat <- bioenvdist(enviroControlsTrimmed, which = "best")
 
 
 adonisResults <- 
-  adonis2(trimmCount ~ ., data = trimmES)
+  adonis2(trimmCount ~ ., data = selectES)
 adonisResults <- 
   adonisResults[order(adonisResults$R2)[1:(nrow(adonisResults)-2)],]
 pValuesAdonis <- adonisResults$`Pr(>F)`
 pValuesDf <- data.frame("Params" = rownames(adonisResults), 
-                        "PValues" = pValuesAdonis)[seq(1, 17),]
+                        "PValues" = pValuesAdonis)[seq(1, 8),]
 library(fuzzySim)
 correctedP <- FDR(pvalues = pValuesDf)
 
 y0 <- 0.06
 yLength <- 0.9
 y1 <- yLength+y0
-xa0 <- 0.13
-xLength <- 0.4
-xDiff <- 0.02
+xa0 <- 0.21
+xLength <- 0.37
+xDiff <- 0.04
 xa1 <- xa0 + xLength
 xb0 <- xa1 + xDiff
 xb1 <- xb0 + xLength
 
-png("FigBinExtras/adonisResults.png", width = 1200, height = 1200)
+png("FigBinExtras/adonisResults_trim.png", width = 1200, height = 1200)
 plot.new()
 
 par(new = "TRUE",plt = c(xa0, xa1, y0, y1),las = 1, cex.axis = 2.5)
-barplot(adonisResults$R2, horiz = TRUE, names.arg = rownames(adonisResults), las = 1)
+barplot(adonisResults$R2, horiz = TRUE, 
+        names.arg = gsub("`", "", rownames(adonisResults)), las = 1)
 
 par(new = "TRUE",plt = c(xb0, xb1, y0, y1),las = 1, cex.axis = 2.5)
 barplot(adonisResults$F, horiz = TRUE, las = 1)
@@ -114,13 +125,11 @@ dev.off()
 
 
 
-esControl <- trimmES
+esControl <- selectES
 esControl$normalControl1 <- rnorm(nrow(esControl),100, 10)
 esControl$normalControl2 <- rnorm(nrow(esControl),10, 10)
 esControl$normalControl3 <- rnorm(nrow(esControl),1, 10)
 esControl$betaControl1 <- rbeta(nrow(esControl),1,5)
-esControl$CHLa <- NULL
-colnames(esControl)[which(colnames(esControl) == "CHLa.1")] <- "Chl-a"
 adonisResults <- 
   adonis2(trimmCount ~ ., data = esControl)
 adonisResults <- 
@@ -148,7 +157,7 @@ for (i in 1:nrow(pVals)){
 
 y0 <- 0.06
 ymax <- 0.98
-xa0 <- 0.2
+xa0 <- 0.21
 xb1 <- 0.95
 xDiff <- 0.02
 xLength <- (xb1 - xa0 - xDiff)/2
@@ -157,22 +166,17 @@ xb0 <- xa1 + xDiff
 
 rowLabels <- rownames(adonisResults)
 
-rowLabels <- gsub("`", "", rowLabels)
-rowLabels <- gsub("SurfTemp_1m", "Surface Temp", rowLabels)
-rowLabels <- gsub("D.O..1",  "DO (%)", rowLabels)
-rowLabels <- gsub("NO3.NO2", "NO3+NO2", rowLabels)
-
-png("FigBinExtras/adonisResultsControl.png", width = 1200, height = 1200)
+png("FigBinExtras/adonisResultsControl_trim.png", width = 1200, height = 1200)
 plot.new()
 
 par(new = "TRUE",plt = c(xa0, xa1, y0, ymax),las = 1, cex.axis = 2.5)
-barplot(adonisResults$R2, horiz = TRUE, names.arg = rowLabels, las = 1)
+barplot(adonisResults$R2, horiz = TRUE, names.arg = gsub("`", "", rowLabels), las = 1)
 mtext("R2 Value", side = 3, line = -2, cex = 2.5, font = 2)
 
 par(new = "TRUE",plt = c(xb0, xb1, y0, ymax),las = 1, cex.axis = 2.5)
 p1 <- barplot(adonisResults$F, horiz = TRUE, las = 1)
 mtext("F Value", side = 3, line = -2, cex = 2.5, font = 2)
-text(x = 115, y = p1, pVals$Sig, xpd = NA, cex = 2.5, font = 2, adj = 0)
+text(x = 90, y = p1, pVals$Sig, xpd = NA, cex = 2.5, font = 2, adj = 0)
 
 dev.off()
 

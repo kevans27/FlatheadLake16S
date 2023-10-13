@@ -1,7 +1,7 @@
 windspeed <- 
-  read.csv("~/FlatheadPublic/Weather/YBPoint_WindSpeed_Spring2013.csv")
+  read.csv("~/FlatheadPublic/Weather/YBPoint_WindSpeed_ITP.csv")
 winddirection <- 
-  read.csv("~/FlatheadPublic/Weather/YBPoint_WindDirection_Spring2013.csv")
+  read.csv("~/FlatheadPublic/Weather/YBPoint_WindDirection_ITP.csv")
 
 windspeed$id <- NULL
 windspeed$parameterID <- NULL

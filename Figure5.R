@@ -1,217 +1,246 @@
-smallAbund0 <- 
-  read.csv("~/FlatheadMicrobes/SubsampledData/small_updatedNames.count_table", 
+smallAbund0 <- read.csv(
+  "~/FlatheadMicrobes/SubsampledData/small_updatedNames.count_table", 
                         stringsAsFactors = FALSE, row.names = 1)
-taxTable <- read.csv("RawData/prok.98.taxonomy")
-`%notin%` <- Negate(`%in%`)
+
+library(vegan)
+library(cetcolor)
+
+smallAbund <- smallAbund0
 
 #Rename stuff
 for (i in 1){
-  colnames(smallAbund0) <- gsub("Sept", "Sep", colnames(smallAbund0))
-  colnames(smallAbund0) <- gsub("June", "Jun", colnames(smallAbund0))
-  colnames(smallAbund0) <- gsub("July", "Jul", colnames(smallAbund0))
-  colnames(smallAbund0) <- sub("[^_]*_(.*)", "\\1", colnames(smallAbund0))
+  colnames(smallAbund) <- gsub("Sept", "Sep", colnames(smallAbund))
+  colnames(smallAbund) <- gsub("June", "Jun", colnames(smallAbund))
+  colnames(smallAbund) <- gsub("July", "Jul", colnames(smallAbund))
+  colnames(smallAbund) <- sub("[^_]*_(.*)", "\\1", colnames(smallAbund))
 }
 
-smallAbund <- smallAbund0
-targDf <- smallAbund0
 
-mainVal <- colSums(targDf[,grep("Sequence", colnames(targDf), invert = TRUE)])
-targDf <- sweep(targDf[,grep("Sequence", colnames(targDf), invert = TRUE)], 
-                2, mainVal, FUN = '/')
-targDf$Sequence <- smallAbund0$Sequence
+#Find dates for all
+for (i in 1){
+  uniqueSmall <- unique(gsub("_[^_]+$", "\\1", colnames(smallAbund)))[
+    grep("_", unique(gsub("_[^_]+$", "\\1", colnames(smallAbund))))]
+  
+  datesSmall <- unique(as.Date(sapply(strsplit(uniqueSmall, "_"), `[[`, 1), 
+                               format = "%d%b%y"))
+  datesSmall <- datesSmall[order(datesSmall)]
+}
+
+smalls <- data.frame("Date" = datesSmall, "m10" = NA, "DCM" = NA, "m50" = NA, 
+                     "m90" = NA)
+for (i in 1:length(datesSmall)){
+  samps <- grep(paste0("^", gsub("(?<![0-9])0+", "", format(datesSmall[i], "%d%b%y"), 
+                                 perl = TRUE)), colnames(smallAbund))
+  subFram <- t(smallAbund[, samps])
+  subFram <- subFram[, colSums(subFram != 0) > 0]
+  
+  dfram <- vegdist(subFram, method = "jaccard", upper = TRUE)
+  fMRow <- grep("05m", labels(dfram))
+  
+  if (length(fMRow) != 0){
+    compRow <- as.matrix(dfram)[fMRow,]
+    depths <- sapply(strsplit(names(compRow), "_"), `[[`, 2)
+    
+    if("10m" %in% depths){
+      smalls[i, "m10"] <- compRow[depths == "10m"]
+    }
+    if("DCM" %in% depths){
+      smalls[i, "DCM"] <- compRow[depths == "DCM"]
+    }
+    if("50m" %in% depths){
+      smalls[i, "m50"] <- compRow[depths == "50m"]
+    }
+    if("90m" %in% depths){
+      smalls[i, "m90"] <- compRow[depths == "90m"]
+    }
+  }
+}
+
+all5ms <- t(smallAbund[, grep("5m", colnames(smallAbund))])
+rowlyDates <- unique(as.Date(sapply(strsplit(rownames(all5ms), "_"), `[[`, 1), 
+                             format = "%d%b%y"))
+all5ms <- all5ms[order(rowlyDates),]
+rowlyDatesSorted <- rowlyDates[order(rowlyDates)]
+daysSince <- as.numeric(rowlyDatesSorted - rowlyDatesSorted[1])
+all5ms <- all5ms[, colSums(all5ms != 0) > 0]
+jaccAll5ms <- as.matrix(vegdist(all5ms, method = "jaccard"))
+dayDiff <- c()
+jaccVal <- c()
+for (i in 1:(nrow(jaccAll5ms)-1)){
+  targRow <- unname(jaccAll5ms[i,(i+1):ncol(jaccAll5ms)])
+  startVal <- daysSince[i]
+  targDateDiff <- daysSince[(i+1):ncol(jaccAll5ms)] - startVal
+  
+  dayDiff <- c(dayDiff, targDateDiff)
+  jaccVal <- c(jaccVal, targRow)
+}
+
+orderTarg <- order(dayDiff)
+sortedDays <- dayDiff[orderTarg]
+sortedJaccs <- jaccVal[orderTarg]
+
+modelFit <- lm(sortedJaccs~sin(2*pi*sortedDays/365)+cos(2*pi*sortedDays/365))
 
 
-targDf$RelAbund <- rowSums(targDf[,colnames(targDf) != "Sequence"])/
-  ((ncol(targDf)-1)*100)
-targDf$MinVal <- apply(targDf[,colnames(targDf) != "Sequence"]/100, 1, min)
-targDf$MaxVal <- apply(targDf[,colnames(targDf) != "Sequence"]/100, 1, max)
-targDf$Sd <- apply(targDf[,colnames(targDf) != "Sequence"]/100, 1, sd)
+smallAbundTrim <- smallAbund[, grep("Sequence", colnames(smallAbund), invert = TRUE)]
 
-reorderedSmall <- targDf[order(targDf$RelAbund, decreasing = TRUE),]
+mCTS <- t(smallAbundTrim)
+shannonSmall <- diversity(mCTS, "shannon")
 
-allTop10000 <- reorderedSmall
-allTop10000[, c("Sd", "RelAbund", "MaxVal", "MinVal")] <- NULL
+smallShan <- data.frame("Date" = datesSmall, "m5_shann" = NA, "m10_shann" = NA, 
+                        "DCM_shann" = NA, "m50_shann" = NA, "m90_shann" = NA)
+for (i in 1:length(datesSmall)){
+samps <- grep(paste0("^", gsub("(?<![0-9])0+", "", format(datesSmall[i], "%d%b%y"), 
+                               perl = TRUE)), names(shannonSmall))
+subFram <- shannonSmall[samps]
 
-alldep <- c("05m", "10m", "DCM", "50m", "90m")
+depths <- sapply(strsplit(names(subFram), "_"), `[[`, 2)
 
-frame5m <- allTop10000[,grep("05m|Sequence", colnames(allTop10000))]
-twoParts5 <- strsplit(colnames(frame5m), "_")
-subDates5 <- sapply(twoParts5, `[[`, 1)
-subDates5 <- as.Date(subDates5, format = "%d%b%y")
-frame5m <- frame5m[, order(subDates5)]
-subDates5 <- sort(subDates5)
-frame10m <- allTop10000[,grep("10m|Sequence", colnames(allTop10000))]
-twoParts10 <- strsplit(colnames(frame10m), "_")
-subDates10 <- sapply(twoParts10, `[[`, 1)
-subDates10 <- as.Date(subDates10, format = "%d%b%y")
-frame10m <- frame10m[, order(subDates10)]
-subDates10 <- sort(subDates10)
-frameDCM <- allTop10000[,grep("DCM|Sequence", colnames(allTop10000))]
-twoPartsDCM <- strsplit(colnames(frameDCM), "_")
-subDatesDCM <- sapply(twoPartsDCM, `[[`, 1)
-subDatesDCM <- as.Date(subDatesDCM, format = "%d%b%y")
-frameDCM <- frameDCM[, order(subDatesDCM)]
-subDatesDCM <- sort(subDatesDCM)
-frame50m <- allTop10000[,grep("50m|Sequence", colnames(allTop10000))]
-twoParts50 <- strsplit(colnames(frame50m), "_")
-subDates50 <- sapply(twoParts50, `[[`, 1)
-subDates50 <- as.Date(subDates50, format = "%d%b%y")
-frame50m <- frame50m[, order(subDates50)]
-subDates50 <- sort(subDates50)
-frame90m <- allTop10000[,grep("90|Sequence", colnames(allTop10000))]
-twoParts90 <- strsplit(colnames(frame90m), "_")
-subDates90 <- sapply(twoParts90, `[[`, 1)
-subDates90 <- as.Date(subDates90, format = "%d%b%y")
-frame90m <- frame90m[, c(order(subDates90))]
-subDates90 <- sort(subDates90)
+if("05m" %in% depths){
+  smallShan[i, "m5_shann"] <- subFram[depths == "05m"]
+}
+if("10m" %in% depths){
+  smallShan[i, "m10_shann"] <- subFram[depths == "10m"]
+}
+if("DCM" %in% depths){
+  smallShan[i, "DCM_shann"] <- subFram[depths == "DCM"]
+}
+if("50m" %in% depths){
+  smallShan[i, "m50_shann"] <- subFram[depths == "50m"]
+}
+if("90m" %in% depths){
+  smallShan[i, "m90_shann"] <- subFram[depths == "90m"]
+}
+}
 
-frameDCM <- cbind(frameDCM[1:13], rep(0, nrow(frameDCM)), frameDCM[14:ncol(frameDCM)])
-frameDCM <- cbind(frameDCM[1:31], rep(0, nrow(frameDCM)), rep(0, nrow(frameDCM)),
-                  frameDCM[32])
+shannEpi <- c(smallShan$m5_shann, smallShan$m10_shann, smallShan$DCM_shann)
+shannHyp <- c(smallShan$m50_shann, smallShan$m90_shann)
+library(stats)
+t.test(x = shannEpi, y = shannHyp, alternative = "less")
 
 
-targetPhylum <- c("Actinobacteria", "Bacteroidetes", "Cyanobacteria",
-                  "Proteobacteria", "Chloroflexi", "Planctomycetes", "Verrucomicrobia")
-colorsDF <- data.frame("Blue" = c("#0c2c84", "#225ea8", "#1d91c0", "#41b6c4",
-                                  "#7fcdbb", "#c7e9b4"),
-                       "Pink" = c("#91003f", "#ce1256", "#e7298a", "#df65b0",
-                                  "#c994c7", "#d4b9da"),
-                       "Green" = c("#005824", "#2ca25f", "#66c2a4", "#b2e2e2",
-                                   "#99d8c9", "#ccece6"),
-                       "Orange" = c("#8c2d04", "#cc4c02", "#ec7014", "#fe9929",
-                                    "#fec44f", "#fee391"),
-                       "Purple" = c("#6e016b", "#9ebcda", "#8c6bb1", "#8c96c6",
-                                    "#9ebcda", "#bfd3e6"), 
-                       "Red" = c("#b10026", "#e31a1c", "#fc4e2a", "#fd8d3c",
-                                 "#feb24c", "#fed976"),
-                       "Blue2" = c("#045a8d", "#2b8cbe", "#74a9cf", "#a6bddb",
-                                 "#d0d1e6", "#f1eef6"))
-ymaxes <- c(0.4, 0.1, 0.4, 0.141, 0.14, 0.1, 0.05)
-legendY <- c(0.4, 0.075, 0.2, 0.11, 0.06, 0.1, 0.03)
-axesRange <- matrix(c(seq(-0.4, 0.4, length.out = 5), seq(-0.1, 0.1, length.out = 5), 
-                      seq(-0.4, 0.4, length.out = 5), seq(-0.14, 0.14, length.out = 5),
-                      seq(-0.14, 0.14, length.out = 5), seq(-0.1, 0.1, length.out = 5),
-                      seq(-0.05, 0.05, length.out = 5)), ncol = 7)
-labelsOrgs <- list(c("acI-B1", "acI-A6", "acI-A7", "acI-B1", "acI-C2", "acIV-A"),
-                   c("Fluviicola", "Sphingobacteriales", "bacI-A1", "Fluviicola", 
-                     "bacI-A1", "Sphingobacteriales"),
-                   c("Cyanobium", "Cyanobium", "Cyanobium", "Cyanobium"),
-                   c("Alpha LD12", "Beta betI-A", "Beta Lhab-A1", "Beta LD28", 
-                     "Beta Rhodoferax", "Beta betIV"),
-                   c("Thermomarinilinea", "SL56"),
-                   c("Gemmata", "Botrimarina", "Botrimarina", "Botrimarina",
-                     "Fimbriiglobus", "Gemmataceae"),
-                   c("Ereboglobus", "Pedosphaeraceae", "Chthoniobacter", 
-                     "Opitutaceae", "LD19"))
-nInt <- c(6, 6, 4, 6, 2, 6, 5)
-phylTextX <- c(53, 53, 53, 53, 52, 53, 53)
-dTop <- 0.01
-diffLength <- -0.03
-pltLength <- 0.88/(2*length(targetPhylum)) - diffLength/2
-png("~/FlatheadMicrobes/FigBinExtras/sixPhyla_5_90_OTU_labels.png", width = 1250, 
-    height = 1400)
-j <- 1
+#smalls <- smalls[smalls$Date != as.Date("2017-05-15"),]
+
+mldData <- 
+  read.csv("~/FlatheadPublic/MLDData.csv", stringsAsFactors = FALSE, row.names = 1)
+mldData$Date <- as.Date(mldData$Date)
+mldData <- mldData[order(mldData$Date),]
+
+fullDF_0 <- merge(smalls, smallShan, by = "Date")
+fullDF <- merge(fullDF_0, mldData, by = "Date")
+
+mixStart <- as.Date(c("2016-12-15", "2017-11-29"))
+mixEnd <- as.Date(c("2017-04-30", "2018-05-08"))
+
+viridis4 <- cet_pal(7, name = "l16")[1:5]
+pchs <- c(25, 18, 17, 19, 15)
+ltys <- c(5, 1, 2, 3, 6)
+cexSmall <- 0.9
+
+tiff("FigBinExtras/jacMixingSmall_Double.tiff", 
+     width = 7, height = 6, pointsize = 12, units = "in", res = 1200)
 plot.new()
-for(i in 1:length(targetPhylum)){
-  allPossibles <- taxTable[grep(targetPhylum[i], taxTable[,"phylum"]), "seqID"]
-  
-  newDf5m <- frame5m[rownames(frame5m) %in% allPossibles,]
-  rownames(newDf5m) <- newDf5m$Sequence
-  newDf5m$Sequence <- NULL
-  newDf90m <- frame90m[rownames(frame90m) %in% allPossibles,]
-  rownames(newDf90m) <- newDf90m$Sequence
-  newDf90m$Sequence <- NULL
-  
-  rowMaxes5m <- apply(newDf5m, 1, FUN = max)
-  rowMaxes90m <- apply(newDf90m, 1, FUN = max)
-  
-  rowMaxes <- pmax(rowMaxes5m, rowMaxes90m)
-  newOrder <- order(rowMaxes, decreasing = TRUE)
-  
-  newDf5m <- newDf5m[newOrder,]
-  newDf90m <- newDf90m[newOrder,]
-  
-  ymaxa <- 1 - dTop - pltLength*(j-1)*2 - diffLength * (j-1) #0.95
-  ymina <- 1 - dTop-pltLength*(j*2-1)-diffLength*(j-1) #0.7625 1-dTop-pltLength
-  ymaxb <- 1 - dTop-pltLength*(j*2-1)-diffLength*(j-1) #
-  yminb <- 1 - dTop-pltLength*j*2-diffLength*(j-1) #0.575 1-0.05-2*pltLength
-  
-  
-  par(new = "TRUE",plt = c(0.09,0.64,ymina,ymaxa),las = 1, xpd = NA)
-  barplot(as.matrix(newDf5m[1:nInt[i],]), xaxt = "n", col = colorsDF[1:nInt[i],i], 
-          border = NA, ylim = c(-ymaxes[i]/50, ymaxes[i]), yaxt = "n")
-  if (i %% 2 == 1){
-    axis(2, at = axesRange[,i], labels = paste0(abs(axesRange[,i]*100), "%"), 
-         lwd = 3, cex.axis = 2, font.axis = 2)
-    text(41.6, ymaxes[i]*0.15, "5 m", font = 2, cex = 2, col = "#636363")
-    text(41.9, -ymaxes[i]*0.15, "90 m", font = 2, cex = 2, col = "#636363")
-  }else{
-    axis(4, at = axesRange[,i], labels = paste0(abs(axesRange[,i]*100), "%"), 
-         lwd = 3, cex.axis = 2, font.axis = 2)
-    text(-1.6, ymaxes[i]*0.15, "5 m", font = 2, cex = 2, col = "#636363")
-    text(-1.9, -ymaxes[i]*0.15, "90 m", font = 2, cex = 2, col = "#636363")
-  }
-  if (i == 4){
-    mtext("Relative Abundance (%)", 2, line = 6, las = 0, font = 2, cex = 2,
-          adj = 1)
-  }
-  par(new = "TRUE",plt = c(0.09,0.64,yminb,ymaxb),las = 1)
-  x <- barplot(-as.matrix(newDf90m[1:nInt[i],]), xaxt = "n", 
-               col = colorsDF[1:nInt[i],i], 
-               border = NA, ylim = c(-ymaxes[i], ymaxes[i]/50), yaxt = "n")
-  legend(45, legendY[i], 
-         legend = paste0(gsub("_", " ", rownames(newDf90m)[1:nInt[i]]), 
-                         " (", labelsOrgs[[i]], ")"), 
-         fill = colorsDF[1:nInt[i],i], bty = "n", cex = 2)
-  text(phylTextX[i], legendY[i], targetPhylum[i], font = 2, cex = 2)
-  j = j+1
-}
-colChoice <- "#494949"
-xa0 <- 3.67
-xa1 <- 10.85
-xb0 <- 21.82
-xb1 <- 28.9
-y0 <- -0.05
-y1 <- 0.54
-lines(x = c(xa0, xa0), y = c(y0, y1), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xa1, xa1), y = c(y0, y1), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xa0, xa1), y = c(y0, y0), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xa0, xa1), y = c(y1, y1), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xb0, xb0), y = c(y0, y1), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xb1, xb1), y = c(y0, y1), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xb0, xb1), y = c(y0, y0), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-lines(x = c(xb0, xb1), y = c(y1, y1), lty = 2, lwd = 3, 
-      col = colChoice, xpd = NULL)
-text(cex=1.5, x=x, y=-0.07, unique(format(subDates90, "%b %d")), xpd=TRUE, srt=90, 
-     font = 2)
-text(2.5, -0.092, "2016", font = 2, cex = 2)
-text(16, -0.092, "2017", font = 2, cex = 2)
-text(34, -0.092, "2018", font = 2, cex = 2)
+
+par(new = "TRUE",plt = c(0.08,0.9,0.6,0.98),las = 1)
+plot(fullDF$Date, fullDF$DCM_shann, xlab = "", xaxt = "n", ylim = c(4.5, 7), 
+     type = "b", yaxt = "n", ylab = "", col = viridis4[3], lwd = 1, pch = pchs[2], 
+     lty = ltys[2])
+rect(mixStart[1], -120, mixEnd[1], 20, col = "#B4B4B4", border = NA)
+rect(mixStart[2], -120, mixEnd[2], 20, col = "#B4B4B4", border = NA)
+abline(v=as.Date("2017-01-01"), lty = 2, col = "gray25", lwd = 1)
+abline(v=as.Date("2018-01-01"), lty = 2, col = "gray25", lwd = 1)
+lines(fullDF$Date, fullDF$m90_shann, col = viridis4[1], lwd = 1, 
+      pch = pchs[5], lty = ltys[5])
+lines(fullDF$Date, fullDF$m50_shann, col = viridis4[2], lwd = 1, 
+      pch = pchs[4], lty = ltys[4])
+lines(fullDF$Date, fullDF$DCM_shann, col = viridis4[3], lwd = 1, 
+      pch = pchs[3], lty = ltys[3])
+lines(fullDF$Date, fullDF$m10_shann, col = viridis4[4], lwd = 1, 
+      pch = pchs[2], lty = ltys[2])
+lines(fullDF$Date, fullDF$m5_shann, col = viridis4[5], lwd = 1, 
+      pch = pchs[1], lty = ltys[1], bg = viridis4[5])
+points(fullDF$Date, fullDF$m90_shann, col = viridis4[1], lwd = 1, 
+      pch = pchs[5], lty = ltys[5])
+points(fullDF$Date, fullDF$m50_shann, col = viridis4[2], lwd = 1, 
+      pch = pchs[4], lty = ltys[4])
+points(fullDF$Date, fullDF$DCM_shann, col = viridis4[3], lwd = 1, 
+      pch = pchs[3], lty = ltys[3])
+points(fullDF$Date, fullDF$m10_shann, col = viridis4[4], lwd = 1, 
+      pch = pchs[2], lty = ltys[2])
+points(fullDF$Date, fullDF$m5_shann, col = viridis4[5], lwd = 1, 
+      pch = pchs[1], lty = ltys[1], bg = viridis4[5])
+axis(1, lwd.ticks = 1, tck = -0.05, padj = 1,
+     labels = NA, 
+     at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), 
+                         by = "month"), '%m-%y')
+     [seq(1, length(format(seq(as.Date("2016-09-01"), max(smalls$Date), 
+                               by = "month"), '%m-%y')), 3)])
+axis(1, lwd.ticks = 1, tck = -0.02, padj = 1, 
+     at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), by = "month"), 
+                     '%m-%y'), labels = NA)
+axis(4, tck = -0.03, lwd.ticks = 1, hadj = 1.2, labels = NA)
+axLab <- seq(4.5, 7, by = 0.5)
+axAdj <- seq(10.2, -9.2, length.out = length(axLab))
+mtext(axLab, side = 4, line = 0.5, padj = axAdj, cex = cexSmall, xpd = NA)
+box(lwd = 1)
+text(as.Date("2019-03-05"), 6, "Diversity (H´)", srt = 270, xpd = NA)
+#text(as.Date("09-15-2016", format = "%m-%d-%Y"), 6.85, "a")
+
+
+par(new = "TRUE",plt = c(0.08,0.9,0.18,0.56),las = 1)
+plot(smalls$Date, smalls$DCM, xlab = "", xaxt = "n", ylim = c(0.5, 1),
+     yaxt = "n", ylab = "", col = viridis4[3], lwd = 1, pch = pchs[2], 
+     lty = ltys[2])
+rect(mixStart[1], -120, mixEnd[1], 20, col = "#B4B4B4", border = NA)
+rect(mixStart[2], -120, mixEnd[2], 20, col = "#B4B4B4", border = NA)
+abline(v=as.Date("2017-01-01"), lty = 2, col = "gray25", lwd = 1)
+abline(v=as.Date("2018-01-01"), lty = 2, col = "gray25", lwd = 1)
+lines(smalls$Date, smalls$m90, col = viridis4[1], lwd = 1, 
+      pch = pchs[5], lty = ltys[5])
+lines(smalls$Date, smalls$m50, col = viridis4[2], lwd = 1, 
+      pch = pchs[4], lty = ltys[4])
+lines(smalls$Date, smalls$DCM, col = viridis4[3], lwd = 1, 
+      pch = pchs[3], lty = ltys[3])
+lines(smalls$Date, smalls$m10, col = viridis4[4], lwd = 1, 
+      pch = pchs[2], lty = ltys[2])
+points(smalls$Date, smalls$m90, col = viridis4[1], lwd = 1, 
+      pch = pchs[5], lty = ltys[5])
+points(smalls$Date, smalls$m50, col = viridis4[2], lwd = 1, 
+      pch = pchs[4], lty = ltys[4])
+points(smalls$Date, smalls$DCM, col = viridis4[3], lwd = 1, 
+      pch = pchs[3], lty = ltys[3])
+points(smalls$Date, smalls$m10, col = viridis4[4], lwd = 1, 
+      pch = pchs[2], lty = ltys[2])
+axis(1, lwd.ticks = 1, tck = -0.05, padj = -0.5,
+     labels = format(seq(as.Date("2016-09-01"), max(smalls$Date), 
+                         by = "month"), '%b')
+     [seq(1, length(format(seq(as.Date("2016-09-01"), max(smalls$Date), 
+                               by = "month"), '%m-%y')), 3)], 
+     at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), 
+                         by = "month"), '%m-%y')
+     [seq(1, length(format(seq(as.Date("2016-09-01"), max(smalls$Date), 
+                               by = "month"), '%m-%y')), 3)], cex = cexSmall)
+axis(1, lwd.ticks = 1, tck = -0.02, padj = 1, 
+     at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), by = "month"), 
+                     '%m-%y'), labels = NA)
+axis(2, tck = -0.03, lwd.ticks = 1, hadj = 0.5, cex = cexSmall)
+box(lwd = 1)
+mtext("Jaccard distance", side = 2, line = 1.8, las = 0)
+#text(as.Date("09-15-2016", format = "%m-%d-%Y"), 0.98, "b")
+
+mtext("2016", side = 1, line = 2, adj = 0.06, cex = cexSmall)
+mtext("2017", side = 1, line = 2, adj = 0.375, cex = cexSmall)
+mtext("2018", side = 1, line = 2, adj = 0.83, cex = cexSmall)
+mtext("Date", side = 1, line = 3, adj = 0.5)
+box(lwd = 1)
+
+legend("bottom", inset=c(0,-0.5), 
+       legend = c("5 m", "10 m", "Chl max  ", "50 m", "90 m"), 
+       col = rev(viridis4)[1:5], horiz = TRUE, pch = pchs[1:5], lty = ltys[1:5], 
+       xpd = NA, bty = "n", text.width = c(40, 60, 100, 60),
+       lwd = 1, box.lwd = 0, adj = 0.2, pt.bg = viridis4[5])
+
 dev.off()
 
 
 
-
-
-
-
-
-
-           #####Gathering stats
-avgAbund <- rowMeans(allTop10000[,colnames(allTop10000) != "Sequence"])
-avgAbund[1:10]
-sum(avgAbund[1:10])
-allPossibles <- taxTable[grep("Cyanobacteria", taxTable[,"phylum"]), "seqID"]
-cyanoTax <- taxTable[grep("Cyanobacteria", taxTable[,"phylum"]),]
-cyanoAbund <- allTop10000[rownames(allTop10000) %in% allPossibles,]
-cyanoAbund$Avg <- rowMeans(cyanoAbund[, colnames(cyanoAbund) != "Sequence"])
-cyanoAbund$seqID <- rownames(cyanoAbund)
-cyanoFull <- merge(cyanoAbund, cyanoTax, by = "seqID", all.x = TRUE)
-cyanoFull <- cyanoFull[order(cyanoFull$Avg, decreasing = TRUE),]

@@ -16,38 +16,37 @@ ybottom <- 0.08
 ywid <- (ytop - ybottom - 4*ygap)/5
 
 textM <- c("5 m", "10 m", "Chl max", "50 m", "90 m")
+cexSmall <- 0.9
 
-png("FigBinExtras/jacModelFit_Quint.png", width = 1000, height = 1200)
+tiff("FigBinExtras/jacModelFit_Quint.tiff", 
+    width = 7, height = 8, pointsize = 12, units = "in", res = 1200)
 plot.new()
 
 for (i in 1:5){
-  par(new = "TRUE",plt = c(xmin,xmax,ytop-i*ywid-(i-1)*ygap,ytop-(i-1)*ywid-(i-1)*ygap), 
-      las = 1, cex.axis = 2.5)
-  plot(names(jacList[[i]]), jacList[[i]], yaxt = "n", xaxt = "n", ylab = "", xlab = "",
-       cex = 2.5, ylim = c(0.55, 0.95))
-  abline(v=365, lty = 2, col = "gray75", lwd = 3)
-  abline(v=730, lty = 2, col = "gray75", lwd = 3)
+  par(new = "TRUE",plt = c(xmin,xmax,ytop-i*ywid-(i-1)*ygap,
+                           ytop-(i-1)*ywid-(i-1)*ygap), las = 1)
+  plot(names(jacList[[i]]), jacList[[i]], yaxt = "n", xaxt = "n", ylab = "", 
+       xlab = "", ylim = c(0.55, 0.95))
+  abline(v=365, lty = 2, col = "gray75")
+  abline(v=730, lty = 2, col = "gray75")
   lines(names(jacList[[i]]), 
         sineAndSat(mean(params_SS$alphPB[,i]), mean(params_SS$PBS[,i]), 
                    mean(params_SS$alph[,i]), mean(params_SS$omic[,i]), 
                    mean(params_SS$interc[,i]), as.numeric(names(jacList[[i]]))),
-        col = "#E69F00", lwd = 6)
-  axis(2, cex.axis=2.5, tck = -0.03, lwd.ticks = 3, hadj = 1, font = 2)
-  box(lwd = 3)
-  text(720, 0.9, textM[i], font = 2, cex = 2.5, adj = 1)
+        col = "#E69F00", lwd = 3)
+  axis(2, tck = -0.03, hadj = 0.5, cex = cexSmall)
+  box(lwd = 1)
+  text(720, 0.9, textM[i], adj = 1, cex = cexSmall)
   if (i < 5){
-    axis(1, at = seq(100, 900, by = 200), cex.axis=2.5, tck = -0.03, lwd.ticks = 3, 
-         hadj = 1.2, font = 2, labels = NA)
-    axis(1, cex.axis=2.5, tck = -0.05, lwd.ticks = 3, hadj = 1.2, font = 2, 
-         labels = NA)
+    axis(1, at = seq(100, 900, by = 200), tck = -0.03, hadj = 1.2, labels = NA)
+    axis(1, tck = -0.05, hadj = 1.2, labels = NA)
   }else {
-    axis(1, at = seq(100, 900, by = 200), cex.axis=2.5, tck = -0.03, lwd.ticks = 3, 
-         hadj = 1.2, font = 2, labels = NA)
-    axis(1, cex.axis=2.5, tck = -0.05, lwd.ticks = 3, padj = 1, font = 2)
-    mtext("Days Between Samples", side = 1, line = 5, las = 0, font = 2, cex = 2.5)
+    axis(1, at = seq(100, 900, by = 200), tck = -0.03, hadj = 1.2, labels = NA)
+    axis(1, tck = -0.05, padj = -1, cex = cexSmall)
+    mtext("Days between samples", side = 1, line = 2, las = 0)
   }
   if (i == 3){
-    mtext("Jaccard dissimilarity", side = 2, line = 5, las = 0, font = 2, cex = 2.5)
+    mtext("Jaccard distance", side = 2, line = 2, las = 0)
   }
 }
 
