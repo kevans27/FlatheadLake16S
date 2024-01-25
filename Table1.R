@@ -1,195 +1,272 @@
-countTableSmall <- 
-  read.csv("~/FlatheadMicrobes/SubsampledData/small_updatedNames.count_table", 
-                            stringsAsFactors = FALSE, row.names = 1)
-
-smallSeqs <- rownames(countTableSmall)
-nameKey <- data.frame("LongNames" = smallSeqs, 
-                      "ShortNames" = countTableSmall$Representative_Sequence)
-
-countTableSmall$blastname <- NULL
-countTableSmall$Representative_Sequence <- NULL
-
+smallAbund0 <- read.csv("SubsampledData/small_updatedNames.count_table", 
+                        stringsAsFactors = FALSE, row.names = 1)
+#Rename stuff
 for (i in 1){
-  fullset <- read.csv('~/FlatheadPublic/hydrolab.csv', na.strings="")
-  fullset <- fullset[fullset$Site == 'Flathead Lake, Midlake Deep',]
-  units <- fullset[1,]
-  fullset <- fullset[-1,]
-  tempStart <- as.Date("2016-01-01")
-  tempEnd  <- as.Date("2019-01-31")
-  
-  main <- "Temp"
-  val <- main
-  
-  df <- fullset[complete.cases(fullset[,main]),]
-  df <- df[seq(13969, nrow(df)),]
-  
-  df$Date <- as.Date(df$Date, format = "%m/%d/%y")
-  suppressWarnings(df[, main] <- as.numeric(as.character(df[, main])))
-  df <- df[(!is.na(df[, main])),]
-  df <- df[(!is.na(df$Depth)),]
-  df$Depth <- round(as.numeric(as.character(df$Depth)))
-  df$Month <- as.numeric(format(df$Date, "%m"))
-  
-  df <- df[df$Depth %in% c(1, 5, 10, 15, 20, 50, 90),]
-  
-  tempDF <- df[df$Date >= tempStart & df$Date <= tempEnd,]
-  tempDF <- tempDF[!is.na(tempDF$Time),]
-  surfTemp <- tempDF[tempDF$Depth == 1,]
-  
-  DCMDat <- read.csv("~/FlatheadPublic/DCMData.csv", header = TRUE, stringsAsFactors = FALSE)
-  DCMDat$Date <- as.Date(DCMDat$Date)
-  DCMDat$Date.1 <- as.Date(DCMDat$Date.1)
-  DCMDat$Date.1.1 <- as.Date(DCMDat$Date.1.1)
-  DCMDat <- DCMDat[order(DCMDat$Date),]
-  DCMDat <- aggregate(DCM~Date, DCMDat, FUN = mean)
-  
-  
-  mldData <- 
-    read.csv("~/FlatheadPublic/MLDData.csv", stringsAsFactors = FALSE, row.names = 1)
-  mldData$Date <- as.Date(mldData$Date)
-  mldData <- mldData[order(mldData$Date),]
+  colnames(smallAbund0) <- gsub("Sept", "Sep", colnames(smallAbund0))
+  colnames(smallAbund0) <- gsub("June", "Jun", colnames(smallAbund0))
+  colnames(smallAbund0) <- gsub("July", "Jul", colnames(smallAbund0))
+  colnames(smallAbund0) <- sub("[^_]*_(.*)", "\\1", colnames(smallAbund0))
 }
 
-taxTable <- read.csv("RawData/prok.98.taxonomy")
+smallAbund <- smallAbund0
+smallAbund$RelAbund <- rowSums(smallAbund0[,colnames(smallAbund0) != "Sequence"])/
+  ((ncol(smallAbund0)-1)*100)
+smallAbund$MinVal <- apply(smallAbund0[,colnames(smallAbund0) != "Sequence"]/100, 
+                           1, min)
+smallAbund$MaxVal <- apply(smallAbund0[,colnames(smallAbund0) != "Sequence"]/100, 
+                           1, max)
+smallAbund$Sd <- apply(smallAbund0[,colnames(smallAbund0) != "Sequence"]/100, 1, sd)
 
-saveSeqNamesSmall <- smallSeqs[order(rowSums(countTableSmall), decreasing = TRUE)]
-countTableSmall <- countTableSmall[order(rowSums(countTableSmall), 
-                                         decreasing = TRUE),]
-trimmedSNS <- saveSeqNamesSmall[1:500]
-trimmedCTS <- countTableSmall[1:500,]
-trimmedSS <- rowSums(countTableSmall)[1:500]
-trimmedSTax <- taxTable[match(saveSeqNamesSmall, taxTable$seqID)[1:500],]
+reorderedSmall <- smallAbund[order(smallAbund$RelAbund, decreasing = TRUE),]
+easyReorderedSmall <- smallAbund0[order(smallAbund$RelAbund, decreasing = TRUE),]
 
-relAbund <- data.frame("SeqID" = trimmedSNS, "RelAbund" = trimmedSS/157/100)
 
-colDataSmall <- data.frame("Depth" = rep(NA, ncol(trimmedCTS)), "SurfTemp" = NA, 
-                           "Date" = as.Date(NA), "DOY" = NA)
+top500Small <- reorderedSmall[seq(1,250),c("Sequence", "RelAbund", "MinVal", 
+                                           "MaxVal", "Sd")]
 
+top500Small[, colnames(top500Small) != "Sequence"] <- 
+  round(top500Small[, colnames(top500Small) != "Sequence"], 2)
+
+twoPartsS <- 
+  strsplit(colnames(easyReorderedSmall[, 
+                                       colnames(easyReorderedSmall) != "Sequence"]),
+           "_")
+subDatesS <- sapply(twoPartsS, `[[`, 1)
+subDatesS <- as.Date(subDatesS, format = "%d%b%y")
+subDepthsS <- sapply(twoPartsS, `[[`, 2)
+subDepthsS[length(subDepthsS)+1] <- "Null"
+
+library("lomb")
+lspOTUS5 <- apply(easyReorderedSmall[seq(1,250),subDepthsS == "05m"], 1, 
+                  function(x) lsp(unname(unlist(x)), 
+                                  times = as.numeric(subDatesS)[subDepthsS == "05m"],
+                                  type = "period", plot = FALSE))
+lspOTUS10 <- apply(easyReorderedSmall[seq(1,250),subDepthsS == "10m"], 1, 
+                   function(x) lsp(unname(unlist(x)), 
+                                   times = 
+                                     as.numeric(subDatesS)[subDepthsS == "10m"],
+                                   type = "period", plot = FALSE))
+lspOTUSDCM <- apply(easyReorderedSmall[seq(1,250),subDepthsS == "DCM"], 1, 
+                    function(x) lsp(unname(unlist(x)), 
+                                    times = 
+                                      as.numeric(subDatesS)[subDepthsS == "DCM"],
+                                    type = "period", plot = FALSE))
+lspOTUS50 <- apply(easyReorderedSmall[seq(1,250),subDepthsS == "50m"], 1, 
+                   function(x) lsp(unname(unlist(x)), 
+                                   times = 
+                                     as.numeric(subDatesS)[subDepthsS == "50m"],
+                                   type = "period", plot = FALSE))
+lspOTUS90 <- apply(easyReorderedSmall[seq(1,250),subDepthsS == "90m"], 1, 
+                   function(x) lsp(unname(unlist(x)), 
+                                   times = 
+                                     as.numeric(subDatesS)[subDepthsS == "90m"],
+                                   type = "period", plot = FALSE))
+
+top500Small$Seasonality_5m <- unlist(lapply(lspOTUS5, `[`, 'p.value'))
+top500Small$Period_5m <- sapply(lapply(lspOTUS5, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_5m > 400 | top500Small$Period_5m < 345, 
+            "Seasonality_5m"] <- NA
+top500Small[top500Small$Period_5m > 400 | top500Small$Period_5m < 345, 
+            "Period_5m"] <- NA
+top500Small[which(top500Small$Seasonality_5m > 0.05), "Period_5m"] <- NA
+top500Small[which(top500Small$Seasonality_5m > 0.05), "Seasonality_5m"] <- NA
+top500Small[which(top500Small$Seasonality_5m < 0.01), "Seasonality_5m"] <- "< 0.01"
+
+
+top500Small$Seasonality_10m <- unlist(lapply(lspOTUS10, `[`, 'p.value'))
+top500Small$Period_10m <- sapply(lapply(lspOTUS10, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_10m > 400 | top500Small$Period_10m < 345, 
+            "Seasonality_10m"] <- NA
+top500Small[top500Small$Period_10m > 400 | top500Small$Period_10m < 345, 
+            "Period_10m"] <- NA
+top500Small[which(top500Small$Seasonality_10m > 0.05), "Period_10m"] <- NA
+top500Small[which(top500Small$Seasonality_10m > 0.05), "Seasonality_10m"] <- NA
+top500Small[which(top500Small$Seasonality_10m < 0.01), "Seasonality_10m"] <- "< 0.01"
+
+top500Small$Seasonality_DCM <- unlist(lapply(lspOTUSDCM, `[`, 'p.value'))
+top500Small$Period_DCM <- sapply(lapply(lspOTUSDCM, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_DCM > 400 | top500Small$Period_DCM < 345, 
+            "Seasonality_DCM"] <- NA
+top500Small[top500Small$Period_DCM > 400 | top500Small$Period_DCM < 345, 
+            "Period_DCM"] <- NA
+top500Small[which(top500Small$Seasonality_DCM > 0.05), "Period_DCM"] <- NA
+top500Small[which(top500Small$Seasonality_DCM > 0.05), "Seasonality_DCM"] <- NA
+top500Small[which(top500Small$Seasonality_DCM < 0.01), "Seasonality_DCM"] <- "< 0.01"
+
+
+top500Small$Seasonality_50m <- unlist(lapply(lspOTUS50, `[`, 'p.value'))
+top500Small$Period_50m <- sapply(lapply(lspOTUS50, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_50m > 400 | top500Small$Period_50m < 345, 
+            "Seasonality_50m"] <- NA
+top500Small[top500Small$Period_50m > 400 | top500Small$Period_50m < 345, 
+            "Period_50m"] <- NA
+top500Small[which(top500Small$Seasonality_50m > 0.05), "Period_50m"] <- NA
+top500Small[which(top500Small$Seasonality_50m > 0.05), "Seasonality_50m"] <- NA
+top500Small[which(top500Small$Seasonality_50m < 0.01), "Seasonality_50m"] <- "< 0.01"
+
+
+
+top500Small$Seasonality_90m <- unlist(lapply(lspOTUS90, `[`, 'p.value'))
+top500Small$Period_90m <- sapply(lapply(lspOTUS90, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_90m > 400 | top500Small$Period_90m < 345, 
+            "Seasonality_90m"] <- NA
+top500Small[top500Small$Period_90m > 400 | top500Small$Period_90m < 345, 
+            "Period_90m"] <- NA
+top500Small[which(top500Small$Seasonality_90m > 0.05), "Period_90m"] <- NA
+top500Small[which(top500Small$Seasonality_90m > 0.05), "Seasonality_90m"] <- NA
+top500Small[which(top500Small$Seasonality_90m < 0.01), "Seasonality_90m"] <- "< 0.01"
+
+
+
+
+
+taxTable <- read.csv("RawData/prok.trim.taxonomy")
+allTop200 <- merge(top500Small, taxTable, by.x = "row.names", by.y = "seqID", 
+                   all.x = TRUE)
+
+allTop200 <- allTop200[order(as.numeric(gsub("Otu", "", allTop200$Sequence))),]
+allTop200[, grep("Period", colnames(allTop200))] <- NULL
+write.csv(allTop200, "seasonalityAndTax_250_Small_Jan2023.csv", quote = FALSE)
+
+
+
+
+
+
+######Percent of phyla
+taxTable <- read.csv("RawData/prok.trim.taxonomy")
+smallAbund0 <- read.csv("SubsampledData/small_updatedNames.count_table", 
+                        stringsAsFactors = FALSE, row.names = 1)
+#Rename stuff
 for (i in 1){
-  colnames(trimmedCTS) <- gsub("Sept", "Sep", colnames(trimmedCTS))
-  colnames(trimmedCTS) <- gsub("June", "Jun", colnames(trimmedCTS))
-  colnames(trimmedCTS) <- gsub("July", "Jul", colnames(trimmedCTS))
-  
-  twoPartsS <- strsplit(colnames(trimmedCTS), "_")
-  subDatesS <- sapply(twoPartsS, `[[`, 2)
-  subDatesS <- as.Date(subDatesS, format = "%d%b%y")
-  depthsS <- sapply(twoPartsS, `[[`, 3)
-  
-  colDataSmall$Depth <- depthsS
-  colDataSmall$SurfTemp <- tempDF[match(subDatesS, tempDF$Date), "Temp"]
-  colDataSmall$Date <- subDatesS
-  colDataSmall$DOY <- as.integer(format(subDatesS, "%j"))
-  
-  #colDataSmall <- merge(colDataSmall, mldData, by = "Date", all.x = TRUE)
-  
-  colDataSmall[colDataSmall$Depth == "DCM", "Depth"] <- 
-    DCMDat[match(colDataSmall[colDataSmall$Depth == "DCM", "Date"], DCMDat$Date), "DCM"]
-  
-  colDataSmall$Depth <- gsub("m", "", colDataSmall$Depth)
-  colDataSmall$Depth <- as.numeric(as.character(colDataSmall$Depth))
-  
-  removeSmall <- which(rowSums(is.na(colDataSmall)) > 0)
-  colDataSmall <- colDataSmall[-removeSmall,]
-  trimmedCTS <- trimmedCTS[, -removeSmall]
+  colnames(smallAbund0) <- gsub("Sept", "Sep", colnames(smallAbund0))
+  colnames(smallAbund0) <- gsub("June", "Jun", colnames(smallAbund0))
+  colnames(smallAbund0) <- gsub("July", "Jul", colnames(smallAbund0))
+  colnames(smallAbund0) <- sub("[^_]*_(.*)", "\\1", colnames(smallAbund0))
 }
-colDataSmall$Layer <- "Epi"
-colDataSmall[colDataSmall$Depth > 30, "Layer"] <- "Hypo"
 
-colDataSmall$MixingStat <- "Strat"
-colDataSmall[(colDataSmall$Date > as.Date("2016-12-01") & colDataSmall$Date < as.Date("2017-05-01")) | (colDataSmall$Date > as.Date("2017-12-01") & colDataSmall$Date < as.Date("2018-05-15")), "MixingStat"] <- "Mixed"
+smallAbund <- smallAbund0
+smallAbund$RelAbund <- rowSums(smallAbund0[,colnames(smallAbund0) != "Sequence"])/
+  ((ncol(smallAbund0)-1)*100)
+smallAbund$MinVal <- apply(smallAbund0[,colnames(smallAbund0) != "Sequence"]/100, 
+                           1, min)
+smallAbund$MaxVal <- apply(smallAbund0[,colnames(smallAbund0) != "Sequence"]/100, 
+                           1, max)
+smallAbund$Sd <- apply(smallAbund0[,colnames(smallAbund0) != "Sequence"]/100, 1, sd)
 
-noFullyMixed <- colDataSmall[colDataSmall$MixingStat == "Strat",]
-noMixedAbund <- trimmedCTS[, colDataSmall$MixingStat == "Strat"]
+reorderedSmall <- smallAbund[order(smallAbund$RelAbund, decreasing = TRUE),]
+easyReorderedSmall <- 
+  smallAbund[order(smallAbund$MaxVal, decreasing = TRUE),
+              c("Sequence", "RelAbund", "MinVal", "MaxVal", "Sd")]
+trimmedSmall <- easyReorderedSmall[easyReorderedSmall$MaxVal > 0.01,]
+trimmedSmall$Row <- 1:nrow(trimmedSmall)
 
-onlyMixed <- colDataSmall[colDataSmall$MixingStat == "Mixed",]
-mixedAbund <- trimmedCTS[, colDataSmall$MixingStat == "Mixed"]
+allTop200 <- merge(trimmedSmall, taxTable, by.x = "row.names", by.y = "seqID", 
+                   all.x = TRUE)
+allTop200 <- allTop200[order(allTop200$Row), ]
 
-library(DESeq2)
-
-
-###Strat
-
-deseqStrat <- DESeqDataSetFromMatrix(noMixedAbund, noFullyMixed, 
-                                             ~ Layer)
-deStrat <- DESeq(deseqStrat)
-otuStratResults <- results(deStrat)
-
-deseqTableStrat <- data.frame("baseMean" = otuStratResults$baseMean, 
-                              "log2FoldChange" = otuStratResults$log2FoldChange, 
-                              "lfcSE" = otuStratResults$lfcSE, 
-                              "stat" = otuStratResults$stat, 
-                              "pvalue" = otuStratResults$pvalue, 
-                              "padj" = otuStratResults$padj)
-rownames(deseqTableStrat) <- rownames(otuStratResults[1])
-
-stratDE <- merge(deseqTableStrat, nameKey, by.x = "row.names", by.y = "LongNames")
-stratDE$Rank <- as.numeric(as.character(gsub("Otu", "", stratDE$ShortNames)))
-
-plotMA(otuStratResults)
+chloroOTUs <- reorderedSmall[allTop200$phylum == "Chloroflexi",]
+actinoOTUs <- reorderedSmall[allTop200$phylum == "Actinobacteria",]
+proteoOTUs <- reorderedSmall[allTop200$phylum == "Proteobacteria",]
+planctOTUs <- reorderedSmall[allTop200$phylum == "Planctomycetes",]
+bacterOTUs <- reorderedSmall[allTop200$phylum == "Bacteroidetes",]
 
 
-###Mixed
-
-deseqStrat <- DESeqDataSetFromMatrix(mixedAbund, onlyMixed, 
-                                     ~ Layer)
-deStrat <- DESeq(deseqStrat)
-otuStratResults <- results(deStrat)
-
-deseqTableStrat <- data.frame("baseMean" = otuStratResults$baseMean, 
-                              "log2FoldChange" = otuStratResults$log2FoldChange, 
-                              "lfcSE" = otuStratResults$lfcSE, 
-                              "stat" = otuStratResults$stat, 
-                              "pvalue" = otuStratResults$pvalue, 
-                              "padj" = otuStratResults$padj)
-rownames(deseqTableStrat) <- rownames(otuStratResults[1])
-
-mixedDE <- merge(deseqTableStrat, nameKey, by.x = "row.names", by.y = "LongNames")
-mixedDE$Rank <- as.numeric(as.character(gsub("Otu", "", mixedDE$ShortNames)))
-
-plotMA(otuStratResults)
-
-
-###Mixed vs strat
-
-deseqStrat <- DESeqDataSetFromMatrix(trimmedCTS, colDataSmall, 
-                                     ~ MixingStat)
-deStrat <- DESeq(deseqStrat)
-otuStratResults <- results(deStrat)
-
-deseqTableStrat <- data.frame("baseMean" = otuStratResults$baseMean, 
-                              "log2FoldChange" = otuStratResults$log2FoldChange, 
-                              "lfcSE" = otuStratResults$lfcSE, 
-                              "stat" = otuStratResults$stat, 
-                              "pvalue" = otuStratResults$pvalue, 
-                              "padj" = otuStratResults$padj)
-rownames(deseqTableStrat) <- rownames(otuStratResults[1])
-
-compDE <- merge(deseqTableStrat, nameKey, by.x = "row.names", by.y = "LongNames")
-compDE$Rank <- as.numeric(as.character(gsub("Otu", "", compDE$ShortNames)))
-
-plotMA(otuStratResults)
+cyanos <- taxTable[grep("Cyanobium", taxTable$clade),]
+cyanoFull <- merge(easyReorderedSmall, cyanos, by.x = "row.names", by.y = "seqID", 
+                   all.x = TRUE)
 
 
 
 
-##In stacked bar
-targOTUs <- c(1, 5, 2, 7, 9, 8, 17, 14, 46, 15, 23, 114, 3, 36, 28, 84, 6, 22, 10, 12, 
-              25, 4, 105, 11, 20, 24, 26, 42, 18, 29, 51, 118, 120)
 
-diffOTUsStrat <- stratDE[stratDE$Rank %in% targOTUs, c("ShortNames", "log2FoldChange",
-                                                       "padj", "Rank")]
-colnames(diffOTUsStrat) <- c("Names", "log2_Strat", "padj_Strat", "Rank")
-diffOTUsMix <- mixedDE[mixedDE$Rank %in% targOTUs, c("ShortNames", "log2FoldChange",
-                                                     "padj")]
-colnames(diffOTUsMix) <- c("Names", "log2_Mixed", "padj_Mixed")
-diffOTUsSeas <- compDE[compDE$Rank %in% targOTUs, c("ShortNames", "log2FoldChange",
-                                                    "padj")]
-colnames(diffOTUsSeas) <- c("Names", "log2_Seas", "padj_Seas")
+###Assign seasonality
+library("lomb")
+lspOTUS5 <- apply(chloroOTUs, 1, 
+                  function(x) lsp(unname(unlist(x)), 
+                                  times = as.numeric(subDatesS),
+                                  type = "period"))
+lspOTUS10 <- apply(actinoOTUs, 1, 
+                   function(x) lsp(unname(unlist(x)), 
+                                   times = 
+                                     as.numeric(subDatesS),
+                                   type = "period"))
+lspOTUSDCM <- apply(proteoOTUs, 1, 
+                    function(x) lsp(unname(unlist(x)), 
+                                    times = 
+                                      as.numeric(subDatesS),
+                                    type = "period"))
+lspOTUS50 <- apply(planctOTUs, 1, 
+                   function(x) lsp(unname(unlist(x)), 
+                                   times = 
+                                     as.numeric(subDatesS),
+                                   type = "period"))
+lspOTUS90 <- apply(bacterOTUs, 1, 
+                   function(x) lsp(unname(unlist(x)), 
+                                   times = 
+                                     as.numeric(subDatesS),
+                                   type = "period"))
 
-merge0 <- merge(diffOTUsStrat, diffOTUsMix, by = "Names")
-merge1 <- merge(merge0, diffOTUsSeas, by = "Names")
+top500Small$Seasonality_5m <- unlist(lapply(lspOTUS5, `[`, 'p.value'))
+top500Small$Period_5m <- sapply(lapply(lspOTUS5, `[`, 'peak.at'),`[[`, 1)[1,]
 
-sortedDESeqTable <- merge1[match(targOTUs, merge1$Rank),]
-sortedDESeqTable$Rank <- NULL
+top500Small[top500Small$Period_5m > 400 | top500Small$Period_5m < 345, 
+            "Seasonality_5m"] <- NA
+top500Small[top500Small$Period_5m > 400 | top500Small$Period_5m < 345, 
+            "Period_5m"] <- NA
+top500Small[which(top500Small$Seasonality_5m > 0.05), "Period_5m"] <- NA
+top500Small[which(top500Small$Seasonality_5m > 0.05), "Seasonality_5m"] <- NA
+top500Small[which(top500Small$Seasonality_5m < 0.01), "Seasonality_5m"] <- "< 0.01"
 
-write.csv(sortedDESeqTable, "deseqTriTable.csv", quote = FALSE)
+
+top500Small$Seasonality_10m <- unlist(lapply(lspOTUS10, `[`, 'p.value'))
+top500Small$Period_10m <- sapply(lapply(lspOTUS10, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_10m > 400 | top500Small$Period_10m < 345, 
+            "Seasonality_10m"] <- NA
+top500Small[top500Small$Period_10m > 400 | top500Small$Period_10m < 345, 
+            "Period_10m"] <- NA
+top500Small[which(top500Small$Seasonality_10m > 0.05), "Period_10m"] <- NA
+top500Small[which(top500Small$Seasonality_10m > 0.05), "Seasonality_10m"] <- NA
+top500Small[which(top500Small$Seasonality_10m < 0.01), "Seasonality_10m"] <- "< 0.01"
+
+top500Small$Seasonality_DCM <- unlist(lapply(lspOTUSDCM, `[`, 'p.value'))
+top500Small$Period_DCM <- sapply(lapply(lspOTUSDCM, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_DCM > 400 | top500Small$Period_DCM < 345, 
+            "Seasonality_DCM"] <- NA
+top500Small[top500Small$Period_DCM > 400 | top500Small$Period_DCM < 345, 
+            "Period_DCM"] <- NA
+top500Small[which(top500Small$Seasonality_DCM > 0.05), "Period_DCM"] <- NA
+top500Small[which(top500Small$Seasonality_DCM > 0.05), "Seasonality_DCM"] <- NA
+top500Small[which(top500Small$Seasonality_DCM < 0.01), "Seasonality_DCM"] <- "< 0.01"
+
+
+top500Small$Seasonality_50m <- unlist(lapply(lspOTUS50, `[`, 'p.value'))
+top500Small$Period_50m <- sapply(lapply(lspOTUS50, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_50m > 400 | top500Small$Period_50m < 345, 
+            "Seasonality_50m"] <- NA
+top500Small[top500Small$Period_50m > 400 | top500Small$Period_50m < 345, 
+            "Period_50m"] <- NA
+top500Small[which(top500Small$Seasonality_50m > 0.05), "Period_50m"] <- NA
+top500Small[which(top500Small$Seasonality_50m > 0.05), "Seasonality_50m"] <- NA
+top500Small[which(top500Small$Seasonality_50m < 0.01), "Seasonality_50m"] <- "< 0.01"
+
+
+
+top500Small$Seasonality_90m <- unlist(lapply(lspOTUS90, `[`, 'p.value'))
+top500Small$Period_90m <- sapply(lapply(lspOTUS90, `[`, 'peak.at'),`[[`, 1)[1,]
+
+top500Small[top500Small$Period_90m > 400 | top500Small$Period_90m < 345, 
+            "Seasonality_90m"] <- NA
+top500Small[top500Small$Period_90m > 400 | top500Small$Period_90m < 345, 
+            "Period_90m"] <- NA
+top500Small[which(top500Small$Seasonality_90m > 0.05), "Period_90m"] <- NA
+top500Small[which(top500Small$Seasonality_90m > 0.05), "Seasonality_90m"] <- NA
+top500Small[which(top500Small$Seasonality_90m < 0.01), "Seasonality_90m"] <- "< 0.01"

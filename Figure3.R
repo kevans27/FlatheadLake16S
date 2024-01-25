@@ -95,11 +95,11 @@ axesRange <- matrix(c(seq(-0.4, 0.4, length.out = 5),
                       seq(-0.14, 0.14, length.out = 5), 
                       seq(-0.1, 0.1, length.out = 5),
                       seq(-0.05, 0.05, length.out = 5)), ncol = 7)
-labelsOrgs <- list(c("acI-B1", "acI-A6", "acI-A7", "acI-B1", "acI-C2", "acIV-A"),
-                   c("Fluviicola", "Solitalea", "bacI-A1", "Fluviicola", 
-                     "bacI-A1", "Pedobacter"),
+labelsOrgs <- list(c("acI B1", "acI A6", "acI A7", "acI B1", "acI C2", "acIV A"),
+                   c("Fluviicola", "Solitalea", "bacI A1", "Fluviicola", 
+                     "bacI A1", "Pedobacter"),
                    c("Cyanobium", "Cyanobium", "Cyanobium", "Cyanobium"),
-                   c("LD12", "betI-A", "Lhab-A1", "LD28", "Rhodoferax"),
+                   c("LD12", "betI A", "Lhab A1", "LD28", "Rhodoferax"),
                    c("Thermomarinilinea", "SL56"),
                    c("Gemmata", "Botrimarina", "Botrimarina", "Botrimarina",
                      "Fimbriiglobus"),
@@ -130,7 +130,7 @@ xb1 <- 28.9
 y0 <- -4.32
 y1 <- 0.4
 tiff("~/FlatheadMicrobes/FigBinExtras/sixPhyla_5_90_OTU_labels.tiff", 
-     width = 7, height = 9, pointsize = 12, units = "in", res = 1200)
+     width = 7, height = 9, pointsize = 12, units = "in", res = 300)
 j <- 1
 plot.new()
 for(i in 1:length(targetPhylum)){
@@ -158,7 +158,7 @@ for(i in 1:length(targetPhylum)){
   yminb <- 1 - dTop-pltLength*j*2-diffLength*(j-1) #0.575 1-0.05-2*pltLength
   
   
-  par(new = "TRUE",plt = c(0.085,0.61,ymina,ymaxa),las = 1, xpd = NA)
+  par(new = "TRUE",plt = c(0.076,0.601,ymina,ymaxa),las = 1, xpd = NA)
   barplot(as.matrix(newDf5m[1:nInt[i],]), xaxt = "n", col = colorsDF[1:nInt[i],i], 
           border = NA, ylim = c(-ymaxes[i]/50, ymaxes[i]), yaxt = "n")
   if (i == 1){
@@ -179,10 +179,10 @@ for(i in 1:length(targetPhylum)){
     text(0, -ymaxes[i]*0.15, "90 m", col = "#636363", adj = 1, cex = cexSmall)
   }
   if (i == 4){
-    mtext("Relative abundance (%)", 2, line = 2, las = 0,
+    mtext("Relative abundance (%)", 2, line = 1.7, las = 0,
           adj = 1)
   }
-  par(new = "TRUE",plt = c(0.085,0.61,yminb,ymaxb),las = 1)
+  par(new = "TRUE",plt = c(0.076,0.601,yminb,ymaxb),las = 1)
   x <- barplot(-as.matrix(newDf90m[1:nInt[i],]), xaxt = "n", 
                col = colorsDF[1:nInt[i],i], 
                border = NA, ylim = c(-ymaxes[i], ymaxes[i]/50), yaxt = "n")
@@ -205,10 +205,10 @@ for(i in 1:length(targetPhylum)){
     labs <- c(labsItal[1], labsNon[2])
   }
   if (i == 7){
-    legend(43.1, legendY[i], legend = labs, cex = cexSmall,
+    legend(44, legendY[i], legend = labs, cex = cexSmall,
            fill = colorsDF[1:nInt[i],i], bty = "n")
   }else{
-    legend(46.4, legendY[i], legend = labs, cex = cexSmall,
+    legend(44, legendY[i], legend = labs, cex = cexSmall,
            fill = colorsDF[1:nInt[i],i], bty = "n")
   }
   text(phylTextX, legendY[i], targetPhylum[i], adj = 0)

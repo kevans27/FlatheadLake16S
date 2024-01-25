@@ -76,7 +76,7 @@ miniWind$kph <- miniWind$wspeed*1.609344
 #miniDf <- miniDf[miniDf$Depth == 11,]
 
 tiff("~/FlatheadMicrobes/FigBinExtras/profilerTempsBiSeason.tiff", 
-     width = 9, height = 5.5, pointsize = 12, units = "in", res = 1200)
+     width = 9, height = 5.5, pointsize = 12, units = "in", res = 300)
 par(plt = c(xminL, xmaxL, 0.55, 0.99), las = 1)
 plot(topPlotInterest$Date, topPlotInterest$Temp, 
      col = colors[as.factor(topPlotInterest$Depth)],

@@ -116,7 +116,7 @@ totalCellCounts <- reOrgDepths
 
 totals <- mySheets[grep("AUTO", names(mySheets))]
 startDate <- as.Date("2016-09-09")
-endDate  <- as.Date("2019-07-21")
+endDate  <- as.Date("2018-11-13")
 
 dates <- as.Date(unlist(lapply(strsplit(names(totals), " "), `[[`, 1)), format = "%m.%d.%y")
 
@@ -252,7 +252,8 @@ mixStart <- c(-10, 333)
 mixEnd <- c(128, 380)
 
 allDepths <- allDepths[order(allDepths$DOY),]
-annCols <- data.frame("Year" = rev(unique(format(allDepths$Date, "%Y"))), 
+
+annCols <- data.frame("Year" = c("2016", "2017", "2018"), 
                       "Colors" = c("#D55E00", "#009E73", "#0072B2"))
 allDepths$Col <- 
   as.character(annCols[match(format(allDepths$Date, "%Y"), annCols$Year), "Colors"])
@@ -333,18 +334,20 @@ xLabelDateBig <- as.Date("2016-10-20")
 xLabelChl <- as.Date("2016-12-01")
 cexSmall <- 0.9
 
+xlimDat <- as.Date(c("2016-09-01", "2018-12-01"))
+
 letters <- c("5 m", "5 m", "10 m", "10 m", "Chl max", "Chl max", "50 m", 
              "50 m", "90 m", "90 m")
 
 tiff("FigBinExtras/cellCountsDuo.tiff", width = 7, height = 6, 
-    pointsize = 12, units = "in", res = 1200)
+    pointsize = 12, units = "in", res = 300)
 plot.new()
 
 ##Total
 ###5m###
 par(new = "TRUE",plt = c(lx1,lx2,0.82,0.98),las = 1, xpd = FALSE)
 plot(m5Depths$Date, m5Depths$TotalConc, type = "l", pch = 18, yaxt = "n", 
-     xaxt = "n", xlab = "", ylab = "", ylim = c(0, 1200))
+     xaxt = "n", xlab = "", ylab = "", ylim = c(0, 1200), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m5Depths$Date, m5Depths$TotalConc)
@@ -365,7 +368,7 @@ text(xLabelDate5, 1100, letters[1], las = 0)
 par(new = "TRUE",plt = c(lx1,lx2,0.64,0.8),las = 1)
 plot(m10Depths$Date, m10Depths$TotalConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 1200))
+     main = "", ylim = c(0, 1200), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m10Depths$Date, m10Depths$TotalConc)
@@ -387,7 +390,7 @@ text(xLabelDateBig, 1100, letters[3], las = 0)
 par(new = "TRUE",plt = c(lx1,lx2,0.46,0.62),las = 1)
 plot(DCMDepths$Date, DCMDepths$TotalConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 1200))
+     main = "", ylim = c(0, 1200), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(DCMDepths$Date, DCMDepths$TotalConc)
@@ -411,7 +414,7 @@ mtext(bquote("Non-pigmented picoplankton  (10"^{"5"}~"Cells mL"^{"-1"}~")"),
 par(new = "TRUE",plt = c(lx1,lx2,0.28,0.44),las = 1)
 plot(m50Depths$Date, m50Depths$TotalConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 1200))
+     main = "", ylim = c(0, 1200), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m50Depths$Date, m50Depths$TotalConc)
@@ -432,7 +435,7 @@ text(xLabelDateBig, 1100, letters[7], las = 0)
 #90
 par(new = "TRUE",plt = c(lx1,lx2,0.1,0.26),las = 1)
 plot(m90Depths$Date, m90Depths$TotalConc, type = "l", pch = 18, yaxt = "n", 
-     xaxt = "n", xlab = "", ylab = "", main = "", ylim = c(0, 1200))
+     xaxt = "n", xlab = "", ylab = "", main = "", ylim = c(0, 1200), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m90Depths$Date, m90Depths$TotalConc)
@@ -461,7 +464,7 @@ mtext("Date", 1, line = 2, adj = 1.24)
 par(new = "TRUE",plt = c(rx1,rx2,0.82,0.98),las = 1, xpd = FALSE)
 plot(m5Depths$Date, m5Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 70))
+     main = "", ylim = c(0, 70), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m5Depths$Date, m5Depths$CyaConc)
@@ -483,7 +486,7 @@ text(xLabelDate5, 65, letters[2], las = 0)
 par(new = "TRUE",plt = c(rx1,rx2,0.64,0.8),las = 1)
 plot(m10Depths$Date, m10Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 70))
+     main = "", ylim = c(0, 70), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m10Depths$Date, m10Depths$CyaConc)
@@ -505,7 +508,7 @@ text(xLabelDateBig, 65, letters[4], las = 0)
 par(new = "TRUE",plt = c(rx1,rx2,0.46,0.62),las = 1)
 plot(DCMDepths$Date, DCMDepths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 210))
+     main = "", ylim = c(0, 210), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(DCMDepths$Date, DCMDepths$CyaConc)
@@ -529,7 +532,7 @@ text(xLabelChl, 195, letters[6], las = 0)
 par(new = "TRUE",plt = c(rx1,rx2,0.28,0.44),las = 1)
 plot(m50Depths$Date, m50Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 70))
+     main = "", ylim = c(0, 70), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m50Depths$Date, m50Depths$CyaConc)
@@ -551,7 +554,7 @@ text(xLabelDateBig, 65, letters[8], las = 0)
 par(new = "TRUE",plt = c(rx1,rx2,0.1,0.26),las = 1)
 plot(m90Depths$Date, m90Depths$CyaConc,
      type = "l", pch = 18, yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     main = "", ylim = c(0, 70))
+     main = "", ylim = c(0, 70), xlim = xlimDat)
 rect(earlyFirst, -100, earlyLast, 1500, col = "lightgray", border = NA)
 rect(lateFirst, -100, lateLast, 1500, col = "lightgray", border = NA)
 lines(m90Depths$Date, m90Depths$CyaConc)

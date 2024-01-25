@@ -12,8 +12,8 @@ DCMDat$Date.1.1 <- as.Date(DCMDat$Date.1.1)
 MLDDat <- read.csv("~/FlatheadPublic/MLDData.csv", header = TRUE, 
                    stringsAsFactors = FALSE)
 MLDDat$Date <- as.Date(MLDDat$Date)
-MLDDat$Date.1 <- as.Date(MLDDat$Date.1)
-MLDDat$Date.1.1 <- as.Date(MLDDat$Date.1.1)
+#MLDDat$Date.1 <- as.Date(MLDDat$Date.1)
+#MLDDat$Date.1.1 <- as.Date(MLDDat$Date.1.1)
 
 #Rename/trim things
 for (i in 1){
@@ -205,7 +205,7 @@ makePlotOIMan(groupsOfInterest[4], countTableSmall, "small", 4)
 library(png)
 manualFil <- paste0("FigBinExtras/ClassDS/", groupsOfInterest[1], "_",
                     groupsOfInterest[2], "_PaneledManual.tiff")
-tiff(manualFil, width = 7, height = 6, pointsize = 12, units = "in", res = 1200)
+tiff(manualFil, width = 7, height = 6, pointsize = 12, units = "in", res = 300)
 
 par(mar = c(1, 1, 1, 0), xpd = NA)
 plot(0:2, 0:2, type = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")
@@ -280,7 +280,7 @@ makePlotOIMan(groupsOfInterest[4], countTableSmall, "small", 4)
 
 manualFil <- paste0("FigBinExtras/ClassDS/", groupsOfInterest[1], "_",
                     groupsOfInterest[2], "_PaneledManual.tiff")
-tiff(manualFil, width = 7, height = 6, pointsize = 12, units = "in", res = 1200)
+tiff(manualFil, width = 7, height = 6, pointsize = 12, units = "in", res = 300)
 
 par(mar = c(1, 1, 1, 0), xpd = NA)
 plot(0:2, 0:2, type = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")
@@ -350,7 +350,7 @@ makePlotOIMan(groupsOfInterest[4], countTableSmall, "small", 4)
 
 manualFil <- paste0("FigBinExtras/ClassDS/", groupsOfInterest[1], "_",
                     groupsOfInterest[2], "_PaneledManual.tiff")
-tiff(manualFil, width = 7, height = 6, pointsize = 12, units = "in", res = 1200)
+tiff(manualFil, width = 7, height = 6, pointsize = 12, units = "in", res = 300)
 
 par(mar = c(1, 1, 1, 0), xpd = NA)
 plot(0:2, 0:2, type = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")

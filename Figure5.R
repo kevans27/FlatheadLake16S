@@ -1,5 +1,4 @@
-smallAbund0 <- read.csv(
-  "~/FlatheadMicrobes/SubsampledData/small_updatedNames.count_table", 
+smallAbund0 <- read.csv("~/FlatheadMicrobes/SubsampledData/small_updatedNames.count_table", 
                         stringsAsFactors = FALSE, row.names = 1)
 
 library(vegan)
@@ -21,13 +20,11 @@ for (i in 1){
   uniqueSmall <- unique(gsub("_[^_]+$", "\\1", colnames(smallAbund)))[
     grep("_", unique(gsub("_[^_]+$", "\\1", colnames(smallAbund))))]
   
-  datesSmall <- unique(as.Date(sapply(strsplit(uniqueSmall, "_"), `[[`, 1), 
-                               format = "%d%b%y"))
+  datesSmall <- unique(as.Date(sapply(strsplit(uniqueSmall, "_"), `[[`, 1), format = "%d%b%y"))
   datesSmall <- datesSmall[order(datesSmall)]
 }
 
-smalls <- data.frame("Date" = datesSmall, "m10" = NA, "DCM" = NA, "m50" = NA, 
-                     "m90" = NA)
+smalls <- data.frame("Date" = datesSmall, "m10" = NA, "DCM" = NA, "m50" = NA, "m90" = NA)
 for (i in 1:length(datesSmall)){
   samps <- grep(paste0("^", gsub("(?<![0-9])0+", "", format(datesSmall[i], "%d%b%y"), 
                                  perl = TRUE)), colnames(smallAbund))
@@ -57,8 +54,7 @@ for (i in 1:length(datesSmall)){
 }
 
 all5ms <- t(smallAbund[, grep("5m", colnames(smallAbund))])
-rowlyDates <- unique(as.Date(sapply(strsplit(rownames(all5ms), "_"), `[[`, 1), 
-                             format = "%d%b%y"))
+rowlyDates <- unique(as.Date(sapply(strsplit(rownames(all5ms), "_"), `[[`, 1), format = "%d%b%y"))
 all5ms <- all5ms[order(rowlyDates),]
 rowlyDatesSorted <- rowlyDates[order(rowlyDates)]
 daysSince <- as.numeric(rowlyDatesSorted - rowlyDatesSorted[1])
@@ -121,8 +117,7 @@ t.test(x = shannEpi, y = shannHyp, alternative = "less")
 
 #smalls <- smalls[smalls$Date != as.Date("2017-05-15"),]
 
-mldData <- 
-  read.csv("~/FlatheadPublic/MLDData.csv", stringsAsFactors = FALSE, row.names = 1)
+mldData <- read.csv("~/FlatheadPublic/MLDData.csv", stringsAsFactors = FALSE, row.names = 1)
 mldData$Date <- as.Date(mldData$Date)
 mldData <- mldData[order(mldData$Date),]
 
@@ -138,79 +133,59 @@ ltys <- c(5, 1, 2, 3, 6)
 cexSmall <- 0.9
 
 tiff("FigBinExtras/jacMixingSmall_Double.tiff", 
-     width = 7, height = 6, pointsize = 12, units = "in", res = 1200)
+     width = 7, height = 6, pointsize = 12, units = "in", res = 300)
 plot.new()
 
-par(new = "TRUE",plt = c(0.08,0.9,0.6,0.98),las = 1)
-plot(fullDF$Date, fullDF$DCM_shann, xlab = "", xaxt = "n", ylim = c(4.5, 7), 
-     type = "b", yaxt = "n", ylab = "", col = viridis4[3], lwd = 1, pch = pchs[2], 
-     lty = ltys[2])
+par(new = "TRUE",plt = c(0.08,0.98,0.6,0.98),las = 1)
+plot(fullDF$Date, fullDF$DCM_shann, xlab = "", xaxt = "n", ylim = c(4.5, 7), type = "b", 
+     yaxt = "n", ylab = "", col = viridis4[3], lwd = 1, pch = pchs[2], lty = ltys[2])
 rect(mixStart[1], -120, mixEnd[1], 20, col = "#B4B4B4", border = NA)
 rect(mixStart[2], -120, mixEnd[2], 20, col = "#B4B4B4", border = NA)
 abline(v=as.Date("2017-01-01"), lty = 2, col = "gray25", lwd = 1)
 abline(v=as.Date("2018-01-01"), lty = 2, col = "gray25", lwd = 1)
-lines(fullDF$Date, fullDF$m90_shann, col = viridis4[1], lwd = 1, 
-      pch = pchs[5], lty = ltys[5])
-lines(fullDF$Date, fullDF$m50_shann, col = viridis4[2], lwd = 1, 
-      pch = pchs[4], lty = ltys[4])
-lines(fullDF$Date, fullDF$DCM_shann, col = viridis4[3], lwd = 1, 
-      pch = pchs[3], lty = ltys[3])
-lines(fullDF$Date, fullDF$m10_shann, col = viridis4[4], lwd = 1, 
-      pch = pchs[2], lty = ltys[2])
+lines(fullDF$Date, fullDF$m90_shann, col = viridis4[1], lwd = 1, pch = pchs[5], lty = ltys[5])
+lines(fullDF$Date, fullDF$m50_shann, col = viridis4[2], lwd = 1, pch = pchs[4], lty = ltys[4])
+lines(fullDF$Date, fullDF$DCM_shann, col = viridis4[3], lwd = 1, pch = pchs[3], lty = ltys[3])
+lines(fullDF$Date, fullDF$m10_shann, col = viridis4[4], lwd = 1, pch = pchs[2], lty = ltys[2])
 lines(fullDF$Date, fullDF$m5_shann, col = viridis4[5], lwd = 1, 
       pch = pchs[1], lty = ltys[1], bg = viridis4[5])
-points(fullDF$Date, fullDF$m90_shann, col = viridis4[1], lwd = 1, 
-      pch = pchs[5], lty = ltys[5])
-points(fullDF$Date, fullDF$m50_shann, col = viridis4[2], lwd = 1, 
-      pch = pchs[4], lty = ltys[4])
-points(fullDF$Date, fullDF$DCM_shann, col = viridis4[3], lwd = 1, 
-      pch = pchs[3], lty = ltys[3])
-points(fullDF$Date, fullDF$m10_shann, col = viridis4[4], lwd = 1, 
-      pch = pchs[2], lty = ltys[2])
+points(fullDF$Date, fullDF$m90_shann, col = viridis4[1], lwd = 1, pch = pchs[5], lty = ltys[5])
+points(fullDF$Date, fullDF$m50_shann, col = viridis4[2], lwd = 1, pch = pchs[4], lty = ltys[4])
+points(fullDF$Date, fullDF$DCM_shann, col = viridis4[3], lwd = 1, pch = pchs[3], lty = ltys[3])
+points(fullDF$Date, fullDF$m10_shann, col = viridis4[4], lwd = 1, pch = pchs[2], lty = ltys[2])
 points(fullDF$Date, fullDF$m5_shann, col = viridis4[5], lwd = 1, 
       pch = pchs[1], lty = ltys[1], bg = viridis4[5])
-axis(1, lwd.ticks = 1, tck = -0.05, padj = 1,
-     labels = NA, 
-     at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), 
-                         by = "month"), '%m-%y')
+axis(1, lwd.ticks = 1, tck = -0.05, padj = 1, labels = NA, 
+     at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), by = "month"), '%m-%y')
      [seq(1, length(format(seq(as.Date("2016-09-01"), max(smalls$Date), 
                                by = "month"), '%m-%y')), 3)])
 axis(1, lwd.ticks = 1, tck = -0.02, padj = 1, 
      at = as.numeric(seq(as.Date("2016-09-01"), max(smalls$Date), by = "month"), 
                      '%m-%y'), labels = NA)
-axis(4, tck = -0.03, lwd.ticks = 1, hadj = 1.2, labels = NA)
+axis(2, tck = -0.03, lwd.ticks = 1, hadj = 1.2, labels = NA)
 axLab <- seq(4.5, 7, by = 0.5)
 axAdj <- seq(10.2, -9.2, length.out = length(axLab))
-mtext(axLab, side = 4, line = 0.5, padj = axAdj, cex = cexSmall, xpd = NA)
+mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall, xpd = NA)
 box(lwd = 1)
-text(as.Date("2019-03-05"), 6, "Diversity (H´)", srt = 270, xpd = NA)
+mtext("Diversity (H´)", side = 2, line = 1.8, las = 0)
 #text(as.Date("09-15-2016", format = "%m-%d-%Y"), 6.85, "a")
 
 
-par(new = "TRUE",plt = c(0.08,0.9,0.18,0.56),las = 1)
-plot(smalls$Date, smalls$DCM, xlab = "", xaxt = "n", ylim = c(0.5, 1),
-     yaxt = "n", ylab = "", col = viridis4[3], lwd = 1, pch = pchs[2], 
-     lty = ltys[2])
+par(new = "TRUE",plt = c(0.08,0.98,0.18,0.56),las = 1)
+plot(smalls$Date, smalls$DCM, xlab = "", xaxt = "n", ylim = c(0.5, 1), yaxt = "n", ylab = "", 
+     col = viridis4[3], lwd = 1, pch = pchs[2], lty = ltys[2])
 rect(mixStart[1], -120, mixEnd[1], 20, col = "#B4B4B4", border = NA)
 rect(mixStart[2], -120, mixEnd[2], 20, col = "#B4B4B4", border = NA)
 abline(v=as.Date("2017-01-01"), lty = 2, col = "gray25", lwd = 1)
 abline(v=as.Date("2018-01-01"), lty = 2, col = "gray25", lwd = 1)
-lines(smalls$Date, smalls$m90, col = viridis4[1], lwd = 1, 
-      pch = pchs[5], lty = ltys[5])
-lines(smalls$Date, smalls$m50, col = viridis4[2], lwd = 1, 
-      pch = pchs[4], lty = ltys[4])
-lines(smalls$Date, smalls$DCM, col = viridis4[3], lwd = 1, 
-      pch = pchs[3], lty = ltys[3])
-lines(smalls$Date, smalls$m10, col = viridis4[4], lwd = 1, 
-      pch = pchs[2], lty = ltys[2])
-points(smalls$Date, smalls$m90, col = viridis4[1], lwd = 1, 
-      pch = pchs[5], lty = ltys[5])
-points(smalls$Date, smalls$m50, col = viridis4[2], lwd = 1, 
-      pch = pchs[4], lty = ltys[4])
-points(smalls$Date, smalls$DCM, col = viridis4[3], lwd = 1, 
-      pch = pchs[3], lty = ltys[3])
-points(smalls$Date, smalls$m10, col = viridis4[4], lwd = 1, 
-      pch = pchs[2], lty = ltys[2])
+lines(smalls$Date, smalls$m90, col = viridis4[1], lwd = 1, pch = pchs[5], lty = ltys[5])
+lines(smalls$Date, smalls$m50, col = viridis4[2], lwd = 1, pch = pchs[4], lty = ltys[4])
+lines(smalls$Date, smalls$DCM, col = viridis4[3], lwd = 1, pch = pchs[3], lty = ltys[3])
+lines(smalls$Date, smalls$m10, col = viridis4[4], lwd = 1, pch = pchs[2], lty = ltys[2])
+points(smalls$Date, smalls$m90, col = viridis4[1], lwd = 1, pch = pchs[5], lty = ltys[5])
+points(smalls$Date, smalls$m50, col = viridis4[2], lwd = 1, pch = pchs[4], lty = ltys[4])
+points(smalls$Date, smalls$DCM, col = viridis4[3], lwd = 1, pch = pchs[3], lty = ltys[3])
+points(smalls$Date, smalls$m10, col = viridis4[4], lwd = 1, pch = pchs[2], lty = ltys[2])
 axis(1, lwd.ticks = 1, tck = -0.05, padj = -0.5,
      labels = format(seq(as.Date("2016-09-01"), max(smalls$Date), 
                          by = "month"), '%b')
@@ -234,11 +209,9 @@ mtext("2018", side = 1, line = 2, adj = 0.83, cex = cexSmall)
 mtext("Date", side = 1, line = 3, adj = 0.5)
 box(lwd = 1)
 
-legend("bottom", inset=c(0,-0.5), 
-       legend = c("5 m", "10 m", "Chl max  ", "50 m", "90 m"), 
-       col = rev(viridis4)[1:5], horiz = TRUE, pch = pchs[1:5], lty = ltys[1:5], 
-       xpd = NA, bty = "n", text.width = c(40, 60, 100, 60),
-       lwd = 1, box.lwd = 0, adj = 0.2, pt.bg = viridis4[5])
+legend("bottom", inset=c(0,-0.5), legend = c("5 m", "10 m", "Chl max  ", "50 m", "90 m"), 
+       col = rev(viridis4)[1:5], horiz = TRUE, pch = pchs[1:5], lty = ltys[1:5], xpd = NA, 
+       bty = "n", text.width = c(40, 60, 100, 60), lwd = 1, box.lwd = 0, adj = 0.2, pt.bg = viridis4[5])
 
 dev.off()
 

@@ -180,6 +180,19 @@ text(x = 90, y = p1, pVals$Sig, xpd = NA, cex = 2.5, font = 2, adj = 0)
 
 dev.off()
 
+tiff("FigBinExtras/adonisResultsControl_trim.tiff", width = 7, height = 6, pointsize = 12, 
+     units = "in", res = 300)
+
+par(plt = c(xa0, xa1, y0, ymax),las = 1)
+barplot(adonisResults$R2, horiz = TRUE, names.arg = gsub("`", "", rowLabels), las = 1)
+mtext("R2 Value", side = 3, line = -0.5, font = 2)
+
+par(new = "TRUE",plt = c(xb0, xb1, y0, ymax),las = 1)
+p1 <- barplot(adonisResults$F, horiz = TRUE, las = 1)
+mtext("F Value", side = 3, line = -0.5, font = 2)
+text(x = 90, y = p1, pVals$Sig, xpd = NA, font = 2, adj = 0)
+
+dev.off()
 
 tic()
 enviroControlsTrimmed <- bioenv(trimmCount ~ ., esControl, upto = 7,

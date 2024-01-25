@@ -185,7 +185,7 @@ lateLast <- as.Date("2018-05-15")
 
 targetPhylum <- "Cyanobacteria"
 png("~/FlatheadMicrobes/FigBinExtras/cyanobacteria_5_90_Rel.tiff", width = 7, 
-    height = 6, pointsize = 12, units = "in", res = 1200)
+    height = 6, pointsize = 12, units = "in", res = 200)
 plot.new()
 par(new = "TRUE",plt = c(0.1,0.95,0.25,0.9),las = 1, xpd = FALSE)
 plot(dates5, cyano5, col = cols[5], ylim = c(0, 0.4), xlab = "", ylab = "", 
@@ -242,14 +242,14 @@ cyanoVert <- (spaceTop - spaceBottom - vertGap * (nOTUs + 1)) / (nOTUs + 1)
 xLim <- as.Date(c("2016-09-01", "2019-01-01"))
 ymaxes <- c(30, 5.2, 5.2, 5.2)
 
-labels <- c("Aggregate Cyanos", "OTU3", "OTU28", "OTU36")
+labels <- c("Cumulative Cyanobacteria", "OTU3", "OTU28", "OTU36")
 #labels <- c("b", "c", "d", "e")
 
 ptCex <- 1
 cexSmall <- 1
 
 tiff("~/FlatheadMicrobes/FigBinExtras/cyanobacteria_5_90_Rel_OTUs.tiff", 
-     width = 7, height = 7, pointsize = 12, units = "in", res = 1200)
+     width = 7, height = 7, pointsize = 12, units = "in", res = 300)
 plot.new()
 
 
@@ -304,7 +304,7 @@ axLab <- seq(0, 40, by = 20)
 axAdj <- seq(5.8, -4.8, length.out = length(axLab))
 mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
 box(lwd = 1)
-text(as.Date("2016-07-25"), 0.35, labels[1], pos = 4)
+text(as.Date("2018-02-10"), 0.35, labels[1], pos = 4)
 abline(v = seq.Date(as.Date("2016-01-01"), as.Date("2021-01-01"), by = "year"),
        lty = 2, col = "gray25")
 
@@ -343,7 +343,7 @@ for (i in 1:nOTUs){
     axLab <- seq(0, 30, by = 15)
     axAdj <- seq(5.8, -4.8, length.out = length(axLab))
     mtext(axLab, side = 4, line = 0.5, padj = axAdj, cex = cexSmall)
-    text(as.Date("2016-07-25"), 26.25, labels[i+1], pos = 4)
+    text(as.Date("2018-09-30"), 26.25, labels[i+1], pos = 4)
   }
   if (i == 2){
     axis(2, tck = -0.03, padj = 1, at = seq(1.25, 10, by = 2.5), labels = NA)
@@ -352,7 +352,7 @@ for (i in 1:nOTUs){
     axLab <- seq(0, 5, by = 2.5)
     axAdj <- seq(5.8, -4.4, length.out = length(axLab))
     mtext(axLab, side = 2, line = 0.5, padj = axAdj, cex = cexSmall)
-    text(as.Date("2016-07-25"), 4.375, labels[i+1], pos = 4)
+    text(as.Date("2018-09-18"), 4.375, labels[i+1], pos = 4)
   }
   if (i == 3){
     axis(4, tck = -0.03, padj = 1, at = seq(1.25, 10, by = 2.5), labels = NA)
@@ -361,7 +361,7 @@ for (i in 1:nOTUs){
     axLab <- seq(0, 5, by = 2.5)
     axAdj <- seq(5.8, -4.5, length.out = length(axLab))
     mtext(axLab, side = 4, line = 0.5, padj = axAdj, cex = cexSmall)
-    text(as.Date("2016-07-25"), 4.375, labels[i+1], pos = 4)
+    text(as.Date("2018-09-18"), 4.375, labels[i+1], pos = 4)
   }
   box(lwd = 1)
   if (i == 2){

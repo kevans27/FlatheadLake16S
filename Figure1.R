@@ -209,7 +209,7 @@ col2 <- "#005AB5"
 cexSmall <- 0.9
 
 tiff("FigBinExtras/SurfLightandTemp_Intro.tiff", width = 7, height = 6, 
-     pointsize = 12, units = "in", res = 1200)
+     pointsize = 12, units = "in", res = 300)
 
 par(mar = c(1, 3, 1, 0), xpd = NA)
 plot(0:2, 0:2, type = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")

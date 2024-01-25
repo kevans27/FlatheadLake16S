@@ -8,7 +8,7 @@ sineAndSat <- function(alphPB, PBS, alph, omic, interc, days){
 jacList <- readRDS("jacListData.rds")
 
 
-xmin <- 0.12
+xmin <- 0.085
 xmax <- 0.998
 ygap <- 0.02
 ytop <- 0.99
@@ -19,7 +19,7 @@ textM <- c("5 m", "10 m", "Chl max", "50 m", "90 m")
 cexSmall <- 0.9
 
 tiff("FigBinExtras/jacModelFit_Quint.tiff", 
-    width = 7, height = 8, pointsize = 12, units = "in", res = 1200)
+    width = 7, height = 8, pointsize = 12, units = "in", res = 300)
 plot.new()
 
 for (i in 1:5){
